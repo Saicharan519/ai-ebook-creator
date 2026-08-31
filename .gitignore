@@ -22,8 +22,12 @@ npm-debug.log*
 Thumbs.db
 
 # Editor
-.vscode/settings.json
+.vscode/
 .idea/
+
+# Documentation
+README.md
+**/README.md
 
 # secrets cleanup artifact — safe to delete
 secrets.txt
