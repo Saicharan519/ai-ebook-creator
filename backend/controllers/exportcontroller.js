@@ -312,7 +312,7 @@ const exportAsDocuments = async (req, res) => {
         // Cover page with image if available
         const coverPage = [];
         if (book.coverImage && !book.coverImage.includes("pravatar")) {
-            const imagepath = book.coverImage.substring(1);
+            const imagepath = path.isAbsolute(book.coverImage) ? book.coverImage : path.join(__dirname, "..", book.coverImage);
             try {
                 if (fs.existsSync(imagepath)) {
                     const imageBuffer = fs.readFileSync(imagepath);
@@ -753,7 +753,7 @@ const exportAsPDF = async (req, res) => {
 
         // Cover page with image if available
         if (book.coverImage && !book.coverImage.includes("pravatar")) {
-            const imagePath = book.coverImage.substring(1);
+            const imagePath = path.isAbsolute(book.coverImage) ? book.coverImage : path.join(__dirname, "..", book.coverImage);
             try {
                 if (fs.existsSync(imagePath)) {
                     const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;

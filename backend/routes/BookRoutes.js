@@ -10,7 +10,6 @@ const{
 } = require("../controllers/bookcontroller");
 const { protect } = require("../middleware/authMiddleware");
 const upload= require("../middleware/uploadMiddleware");
-const { route } = require("./authRoutes");
 //apply protect middleware to all routes
 router.use(protect);
 router.route("/").post(createBook).get(getBooks);

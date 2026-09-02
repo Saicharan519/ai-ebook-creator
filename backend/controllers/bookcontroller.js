@@ -55,11 +55,15 @@ const getBookById = async (req, res) => {
 // @access Private
 const updateBook = async (req, res) => {   
     try {
-        const book = await bookService.updateBook(req.params.id, req.body);
+        const book = await bookService.getBookById(req.params.id);
         if (!book) {
             return res.status(404).json({ message: "Book not found" });
         }
-        res.status(200).json(book);
+        if (book.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to update this book" });
+        }
+        const updatedBook = await bookService.updateBook(req.params.id, req.body);
+        res.status(200).json(updatedBook);
     } catch (error) {
         console.error("Error in updateBook:", error);
         res.status(500).json({ message: "Server error" });
@@ -70,10 +74,14 @@ const updateBook = async (req, res) => {
 // @access Private
 const deleteBook = async (req, res) => {
     try {
-        const book = await bookService.deleteBook(req.params.id);
+        const book = await bookService.getBookById(req.params.id);
         if (!book) {
             return res.status(404).json({ message: "Book not found" });
         }
+        if (book.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to delete this book" });
+        }
+        await bookService.deleteBook(req.params.id);
         res.status(200).json({ message: "Book deleted successfully" });
     } catch (error) {
         console.error("Error in deleteBook:", error);
@@ -81,7 +89,7 @@ const deleteBook = async (req, res) => {
     }
 
 }
-// @route POST /api/books/:id/cover
+// @route POST /api/books/cover/:id
 //  @desc Update book cover image
 // @access Private
 const updateBookCover = async (req, res) => {
@@ -89,12 +97,15 @@ const updateBookCover = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: "Please upload an image file" });
         }
-        // Save the cover image path relative to server root: /uploads/filename
-        const coverPath = `/uploads/${req.file.filename}`;
-        const book = await bookService.updateBookCover(req.params.id, coverPath);
-        if (!book) {
+        const existingBook = await bookService.getBookById(req.params.id);
+        if (!existingBook) {
             return res.status(404).json({ message: "Book not found" });
         }
+        if (existingBook.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to update this book cover" });
+        }
+        const coverPath = `/uploads/${req.file.filename}`;
+        const book = await bookService.updateBookCover(req.params.id, coverPath);
         res.status(200).json(book);
     } catch (error) {
         console.error("Error in updateBookCover:", error);

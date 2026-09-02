@@ -12,7 +12,7 @@ const generateOutline = async (req, res) => {
         const prompt = `Generate an outline for a book about "${topic}". The writing style should be "${style}". Create exactly ${numChapters} chapters. Additional context: "${description}". You MUST return ONLY a JSON array containing the chapters. Do not include any other text or markdown formatting. Each chapter object must have exactly two string properties: "title" and "description".`;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.6-flash",
             contents: prompt,
         });
         const text = response.text;
@@ -59,7 +59,7 @@ Writing Style: "${style}"
 Please write the full, comprehensive content of this chapter. Use proper formatting like paragraphs and subheadings (e.g. using markdown format) if helpful, but do NOT include the main title header of the chapter at the very start. Just begin writing the content itself directly. Make it flow naturally.`;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.6-flash",
             contents: prompt,
         });
 

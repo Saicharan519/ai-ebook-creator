@@ -2,9 +2,9 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 // create upload directory if it doesn't exist
-const uploader="uploads";
+const uploader = path.join(__dirname, "../uploads");
 if (!fs.existsSync(uploader)) {
-    fs.mkdirSync(uploader);
+    fs.mkdirSync(uploader, { recursive: true });
 }
 //set up storage engine
 const storage = multer.diskStorage({
@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
     filename: function (req, file, cb) {
         cb(
             null,
-         `${file.filename}-${Date.now()}${path.extname(file.originalname)}`
+         `${file.fieldname || "cover"}-${Date.now()}${path.extname(file.originalname)}`
         );
     
     },
