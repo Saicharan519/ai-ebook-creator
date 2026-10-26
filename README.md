@@ -105,7 +105,9 @@ npm run db:migrate                         # create the tables
 npm run dev                                # API on :8000, web app on :5173
 ```
 
-Open http://localhost:5173. The page shows whether the API and database are reachable.
+Open http://localhost:5173. The landing page footer shows whether the API and database are reachable.
+
+**AI features locally:** with `AI_PROVIDER=fake` in `apps/api/.env`, the co-writer streams placeholder text, so every AI feature can be tried without an API key. For real writing, set `AI_PROVIDER=gemini` and add a `GEMINI_API_KEY` from [Google AI Studio](https://aistudio.google.com/apikey).
 
 ### Useful commands
 

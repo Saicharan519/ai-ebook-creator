@@ -1,6 +1,6 @@
 import { PASSWORD_MIN_LENGTH, registerInputSchema } from "@ebook/shared";
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Button } from "../components/ui/Button";
 import { TextField } from "../components/ui/TextField";
 import { useAuth } from "../features/auth/auth-context";
@@ -9,7 +9,6 @@ import { errorMessage, fieldErrorsFrom, type FieldErrors } from "../lib/form-err
 
 export function SignupPage() {
   const { register } = useAuth();
-  const navigate = useNavigate();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -32,8 +31,8 @@ export function SignupPage() {
 
     setSubmitting(true);
     try {
+      // RedirectIfAuthenticated takes the new user to their books
       await register(parsed.data);
-      navigate("/books", { replace: true });
     } catch (error) {
       setFormError(errorMessage(error));
     } finally {

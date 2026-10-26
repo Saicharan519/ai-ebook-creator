@@ -6,6 +6,7 @@ import { AppHeader } from "../components/layout/AppHeader";
 import { Button } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Spinner } from "../components/ui/Spinner";
+import { OutlineDialog } from "../features/ai/OutlineDialog";
 import { BookDetailsDialog } from "../features/books/BookDetailsDialog";
 import {
   useBook,
@@ -34,6 +35,7 @@ export function EditorPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
   const [toDelete, setToDelete] = useState<ChapterSummary | null>(null);
   const flushRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -152,6 +154,7 @@ export function EditorPage() {
             adding={createChapter.isPending}
             onDelete={setToDelete}
             onReorder={(ids) => reorderChapters.mutate(ids)}
+            onPlan={() => setPlanOpen(true)}
           />
         </aside>
 
@@ -177,6 +180,13 @@ export function EditorPage() {
           )}
         </main>
       </div>
+
+      <OutlineDialog
+        book={book.data}
+        open={planOpen}
+        onClose={() => setPlanOpen(false)}
+        onAdded={selectChapter}
+      />
 
       <BookDetailsDialog
         book={book.data}

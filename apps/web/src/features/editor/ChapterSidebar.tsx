@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ChapterSummary } from "@ebook/shared";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/cn";
 import { pluralize } from "../../lib/format";
@@ -29,6 +29,7 @@ interface ChapterSidebarProps {
   adding: boolean;
   onDelete: (chapter: ChapterSummary) => void;
   onReorder: (chapterIds: string[]) => void;
+  onPlan: () => void;
 }
 
 export function ChapterSidebar({
@@ -39,6 +40,7 @@ export function ChapterSidebar({
   adding,
   onDelete,
   onReorder,
+  onPlan,
 }: ChapterSidebarProps) {
   const sensors = useSensors(
     // A small distance threshold so a plain click still selects the chapter
@@ -79,6 +81,13 @@ export function ChapterSidebar({
           </ol>
         </SortableContext>
       </DndContext>
+
+      <div className="border-t border-stone-200 p-3">
+        <Button variant="secondary" size="sm" className="w-full justify-center" onClick={onPlan}>
+          <Sparkles className="h-4 w-4 text-violet-600" />
+          Plan chapters with AI
+        </Button>
+      </div>
     </nav>
   );
 }

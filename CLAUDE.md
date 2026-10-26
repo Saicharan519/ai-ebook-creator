@@ -56,7 +56,8 @@ CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, and b
 - **Scope every book-related query to the owner** (`where: { id, ownerId: user.id }`). Every route gets a test showing that another user gets a 404.
 - Controllers stay thin: parse the input, call the service, send the response. Business logic lives in services.
 - Throw `AppError` subclasses (for example `NotFoundError`). The central error handler formats every error response.
-- Every LLM call goes through `LlmProvider` and the context builder. Structured LLM output is validated with Zod. Tests use the fake provider, never the real API.
+- Every LLM call goes through `LlmProvider` (`apps/api/src/lib/llm`) and the prompt builders in `modules/ai/prompts.ts`; author text always goes inside `tag()` blocks. Structured LLM output is validated with Zod. Tests inject `FakeLlmProvider` via `createApp({ llm })`, never the real API.
+- Streamed AI responses use Server-Sent Events (`modules/ai/sse.ts` on the API, `lib/sse.ts` + `features/ai` on the web). Every AI call records token usage for the daily quota.
 - User-written text and AI output are **escaped or sanitized** before being rendered as HTML.
 - Names: `camelCase` for variables and functions, `PascalCase` for components and types, `kebab-case` for files outside components. Spell names correctly (no `chepters`, `halper`).
 - Comments explain *why*, not what. No leftover debug logs or "fixed bug X" comments.

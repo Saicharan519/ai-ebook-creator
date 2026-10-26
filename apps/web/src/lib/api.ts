@@ -138,3 +138,8 @@ export async function apiBlob(path: string): Promise<Blob> {
   const res = await request(path);
   return res.blob();
 }
+
+/** For streamed responses: returns the raw Response so the body can be read as it arrives. */
+export function apiStream(path: string, options?: RequestOptions): Promise<Response> {
+  return request(path, options);
+}

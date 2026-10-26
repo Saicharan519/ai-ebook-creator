@@ -1,11 +1,16 @@
-import { countWords, type Chapter } from "@ebook/shared";
+import { countWords, INLINE_ACTION_LABELS, type Chapter, type InlineAction } from "@ebook/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Placeholder } from "@tiptap/extensions";
 import { Markdown } from "@tiptap/markdown";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { PenLine, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useState, type RefObject } from "react";
+import { Button } from "../../components/ui/Button";
 import { pluralize } from "../../lib/format";
+import { AiSelectionMenu } from "../ai/AiSelectionMenu";
+import { SuggestionPanel } from "../ai/SuggestionPanel";
+import { useAiSuggestion } from "../ai/use-ai-suggestion";
 import { bookKeys, saveChapter } from "../books/books-api";
 import { EditorToolbar } from "./EditorToolbar";
 import { useAutosave, type SaveStatus } from "./use-autosave";
@@ -16,6 +21,17 @@ interface Draft {
 }
 
 const sameDraft = (a: Draft, b: Draft) => a.title === b.title && a.content === b.content;
+
+// Must stay within the API's limits for inline requests
+const CONTEXT_LIMITS = { selection: 10_000, before: 20_000, after: 5_000 };
+
+/** Where an accepted suggestion goes: replaces [from, to] (an insert when from === to). */
+interface SuggestionTarget {
+  from: number;
+  to: number;
+  title: string;
+  acceptLabel: string;
+}
 
 interface ChapterEditorProps {
   bookId: string;
@@ -29,6 +45,8 @@ interface ChapterEditorProps {
 export function ChapterEditor({ bookId, chapter, onStatusChange, flushRef }: ChapterEditorProps) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft>({ title: chapter.title, content: chapter.content });
+  const suggestion = useAiSuggestion();
+  const [target, setTarget] = useState<SuggestionTarget | null>(null);
 
   const updateDraft = useCallback(
     (change: Partial<Draft>) => {
@@ -75,6 +93,85 @@ export function ChapterEditor({ bookId, chapter, onStatusChange, flushRef }: Cha
     onUpdate: ({ editor }) => updateDraft({ content: editor.getMarkdown() }),
   });
 
+  const aiBase = `/books/${bookId}/chapters/${chapter.id}/ai`;
+
+  /**
+   * Locks the editor while a suggestion is open, so the positions it will
+   * replace can't shift underneath it.
+   */
+  function beginSuggestion(editor: Editor, next: SuggestionTarget, path: string, body: unknown) {
+    editor.setEditable(false);
+    setTarget(next);
+    void suggestion.start({ path, body });
+  }
+
+  function runInlineAction(action: InlineAction, tone?: string) {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const doc = editor.state.doc;
+    const selection = doc.textBetween(from, to, "\n\n");
+
+    if (selection.length > CONTEXT_LIMITS.selection) {
+      window.alert("That selection is too long. Select up to about 1,500 words.");
+      return;
+    }
+
+    beginSuggestion(
+      editor,
+      {
+        from: action === "continue" ? to : from,
+        to,
+        title: action === "tone" ? `Change tone: ${tone}` : INLINE_ACTION_LABELS[action],
+        acceptLabel: action === "continue" ? "Insert" : "Replace selection",
+      },
+      `${aiBase}/inline`,
+      {
+        action,
+        tone,
+        selection,
+        before: doc.textBetween(0, from, "\n\n").slice(-CONTEXT_LIMITS.before),
+        after: doc.textBetween(to, doc.content.size, "\n\n").slice(0, CONTEXT_LIMITS.after),
+      },
+    );
+  }
+
+  async function draftChapter() {
+    if (!editor) return;
+    // The draft is based on the saved title, so save any pending edits first
+    await flush();
+    const empty = editor.isEmpty;
+    beginSuggestion(
+      editor,
+      {
+        from: empty ? 0 : editor.state.doc.content.size,
+        to: editor.state.doc.content.size,
+        title: "Chapter draft",
+        acceptLabel: empty ? "Use draft" : "Add to end",
+      },
+      `${aiBase}/draft`,
+      {},
+    );
+  }
+
+  function closeSuggestion() {
+    suggestion.reset();
+    setTarget(null);
+    editor?.setEditable(true);
+  }
+
+  function acceptSuggestion() {
+    if (!editor || !target || suggestion.state.status === "idle") return;
+    const text = suggestion.state.text.trim();
+    closeSuggestion();
+    editor
+      .chain()
+      .focus()
+      .insertContentAt({ from: target.from, to: target.to }, text, { contentType: "markdown" })
+      .run();
+  }
+
+  const busy = suggestion.state.status !== "idle";
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8">
       <label htmlFor="chapter-title" className="sr-only">
@@ -91,11 +188,47 @@ export function ChapterEditor({ bookId, chapter, onStatusChange, flushRef }: Cha
       <p className="mt-1 text-xs text-stone-500">{pluralize(countWords(draft.content), "word")}</p>
 
       {editor && (
-        <div className="sticky top-0 z-[5] mt-4 bg-white/95 py-2 backdrop-blur">
+        <div className="sticky top-0 z-[5] mt-4 flex flex-wrap items-center gap-2 bg-white/95 py-2 backdrop-blur">
           <EditorToolbar editor={editor} />
+          <div className="flex gap-1">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              onClick={() => runInlineAction("continue")}
+              title="Continue writing from the cursor"
+            >
+              <Sparkles className="h-4 w-4 text-violet-600" />
+              Continue
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              onClick={() => void draftChapter()}
+              title="Draft this chapter from its title and the book's outline"
+            >
+              <PenLine className="h-4 w-4 text-violet-600" />
+              Draft chapter
+            </Button>
+          </div>
         </div>
       )}
+
+      {editor && <AiSelectionMenu editor={editor} onAction={runInlineAction} />}
       <EditorContent editor={editor} className="mt-4" />
+
+      {target && suggestion.state.status !== "idle" && (
+        <SuggestionPanel
+          title={target.title}
+          acceptLabel={target.acceptLabel}
+          state={suggestion.state}
+          onAccept={acceptSuggestion}
+          onDiscard={closeSuggestion}
+          onRetry={suggestion.retry}
+          onStop={suggestion.stop}
+        />
+      )}
     </div>
   );
 }

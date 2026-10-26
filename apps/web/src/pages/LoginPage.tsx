@@ -1,21 +1,14 @@
 import { loginInputSchema } from "@ebook/shared";
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link } from "react-router";
 import { Button } from "../components/ui/Button";
 import { TextField } from "../components/ui/TextField";
 import { useAuth } from "../features/auth/auth-context";
 import { AuthLayout } from "../features/auth/AuthLayout";
 import { errorMessage, fieldErrorsFrom, type FieldErrors } from "../lib/form-errors";
 
-/** Only follow same-site paths after login, never a full URL (open redirect). */
-function safeNext(next: string | null): string {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/books";
-}
-
 export function LoginPage() {
   const { login } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -37,8 +30,8 @@ export function LoginPage() {
 
     setSubmitting(true);
     try {
+      // RedirectIfAuthenticated moves on to ?next= once the session exists
       await login(parsed.data);
-      navigate(safeNext(searchParams.get("next")), { replace: true });
     } catch (error) {
       setFormError(errorMessage(error));
     } finally {

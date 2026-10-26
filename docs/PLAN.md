@@ -60,18 +60,18 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 
 ---
 
-## Phase 2: AI co-writer (1 week)
+## Phase 2: AI co-writer (1 week) ✅ Done
 
 **Goal:** the AI writes with you, streaming in real time.
 
-- [ ] `LlmProvider` interface + Gemini implementation (generate, stream, embed)
-- [ ] `POST /ai/outline`: premise → chapters, validated with Zod, retried once on bad JSON
-- [ ] `POST /ai/chapter-draft` (streamed)
-- [ ] `POST /ai/inline` (streamed over SSE) with actions: continue, rewrite, expand, shorten, tone, show-don't-tell
-- [ ] Cancellation: client abort → server aborts the Gemini request
-- [ ] Web: selection toolbar in the editor, a suggestion block with Accept / Reject / Retry, and a stop button
-- [ ] `AiUsage` logging + per-user daily quota + rate limit on AI routes
-- [ ] Tests with a fake `LlmProvider` (no real API calls in CI)
+- [x] `LlmProvider` interface + Gemini implementation (generate, stream, embed)
+- [x] `POST /ai/outline`: premise → chapters, validated with Zod, retried once on bad JSON
+- [x] `POST /ai/chapter-draft` (streamed)
+- [x] `POST /ai/inline` (streamed over SSE) with actions: continue, rewrite, expand, shorten, tone, show-don't-tell
+- [x] Cancellation: client abort → server aborts the Gemini request
+- [x] Web: selection toolbar in the editor, a suggestion block with Accept / Reject / Retry, and a stop button
+- [x] `AiUsage` logging + per-user daily quota + rate limit on AI routes
+- [x] Tests with a fake `LlmProvider` (no real API calls in CI)
 
 **Done when:** selecting a paragraph and clicking "Rewrite" streams a suggestion you can accept or reject.
 

@@ -1,6 +1,7 @@
-import { Navigate, Outlet, useLocation } from "react-router";
+import { Navigate, Outlet, useLocation, useSearchParams } from "react-router";
 import { FullPageSpinner } from "../../components/ui/Spinner";
 import { useAuth } from "./auth-context";
+import { safeNext } from "./safe-next";
 
 /** Layout route: renders child routes only for signed-in users. */
 export function RequireAuth() {
@@ -17,15 +18,20 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
-/** Layout route for the login and signup pages: signed-in users skip straight to their books. */
+/**
+ * Layout route for the login and signup pages. Once a session exists (already
+ * signed in, or just signed in on this page) it sends the user on to ?next=
+ * or their books. This is the only place that redirects after signing in.
+ */
 export function RedirectIfAuthenticated() {
   const { state } = useAuth();
+  const [searchParams] = useSearchParams();
 
   if (state.status === "loading") {
     return <FullPageSpinner />;
   }
   if (state.status === "authenticated") {
-    return <Navigate to="/books" replace />;
+    return <Navigate to={safeNext(searchParams.get("next"))} replace />;
   }
   return <Outlet />;
 }
