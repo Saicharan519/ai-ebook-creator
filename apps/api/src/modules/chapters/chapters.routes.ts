@@ -1,4 +1,5 @@
 import {
+  addChaptersInputSchema,
   createChapterInputSchema,
   reorderChaptersInputSchema,
   updateChapterInputSchema,
@@ -15,6 +16,12 @@ chaptersRouter.post("/:bookId/chapters", async (req, res) => {
   const bookId = idParam(req.params.bookId, "Book");
   const input = createChapterInputSchema.parse(req.body);
   res.status(201).json(await chaptersService.createChapter(currentUserId(req), bookId, input));
+});
+
+chaptersRouter.post("/:bookId/chapters/batch", async (req, res) => {
+  const bookId = idParam(req.params.bookId, "Book");
+  const input = addChaptersInputSchema.parse(req.body);
+  res.status(201).json(await chaptersService.addChapters(currentUserId(req), bookId, input));
 });
 
 // Declared before /:chapterId so "order" isn't treated as a chapter id

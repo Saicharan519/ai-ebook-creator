@@ -31,6 +31,8 @@ jobs:
       LOG_LEVEL: silent
       JWT_ACCESS_SECRET: ci-secret-that-is-at-least-32-characters-long
       AUTH_RATE_LIMIT_MAX: 1000
+      AI_PROVIDER: fake
+      AI_RATE_LIMIT_PER_MINUTE: 1000
 
     steps:
       - uses: actions/checkout@v7

@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@ebook/shared": "^0.0.0",
+    "@google/genai": "^2.31.0",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "bcryptjs": "^3.0.3",

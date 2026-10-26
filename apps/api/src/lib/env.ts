@@ -19,6 +19,13 @@ const envSchema = z.object({
   PUBLIC_API_URL: z.url().default("http://localhost:8000"),
   // Folder for uploaded files, relative to apps/api
   UPLOAD_DIR: z.string().min(1).default("uploads"),
+  // "fake" streams placeholder text: for tests and for trying the app without an API key
+  AI_PROVIDER: z.enum(["gemini", "fake"]).default("gemini"),
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).default("gemini-3.6-flash"),
+  // Input + output tokens one user may spend per UTC day
+  AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().positive().default(200_000),
+  AI_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
 });
 
 export type Env = z.infer<typeof envSchema>;

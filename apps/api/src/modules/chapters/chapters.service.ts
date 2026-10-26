@@ -1,5 +1,6 @@
 import {
   countWords,
+  type AddChaptersInput,
   type Chapter,
   type ChapterSummary,
   type CreateChapterInput,
@@ -53,6 +54,43 @@ export async function createChapter(
   });
 
   return toChapterDto(chapter);
+}
+
+/**
+ * Appends several chapters at once, e.g. from an AI outline. With `replaceEmpty`,
+ * existing chapters are removed first, but only if none of them has any text.
+ */
+export async function addChapters(
+  userId: string,
+  bookId: string,
+  input: AddChaptersInput,
+): Promise<ChapterSummary[]> {
+  await findOwnedBook(userId, bookId);
+
+  await prisma.$transaction(async (tx) => {
+    if (input.replaceEmpty) {
+      const hasText = await tx.chapter.count({ where: { bookId, NOT: { content: "" } } });
+      if (hasText === 0) {
+        await tx.chapter.deleteMany({ where: { bookId } });
+      }
+    }
+    const count = await tx.chapter.count({ where: { bookId } });
+    await tx.chapter.createMany({
+      data: input.chapters.map((chapter, i) => ({
+        bookId,
+        position: count + i,
+        title: chapter.title,
+        description: chapter.description,
+      })),
+    });
+    await tx.book.update({ where: { id: bookId }, data: { updatedAt: new Date() } });
+  });
+
+  const chapters = await prisma.chapter.findMany({
+    where: { bookId },
+    orderBy: { position: "asc" },
+  });
+  return chapters.map(toChapterSummaryDto);
 }
 
 export async function updateChapter(

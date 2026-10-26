@@ -4,10 +4,12 @@ import express from "express";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { env } from "./lib/env";
+import { createLlmProvider, type LlmProvider } from "./lib/llm";
 import { logger } from "./lib/logger";
 import { storage } from "./lib/storage";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { requireAuth } from "./middleware/require-auth";
+import { aiUsageRouter, createAiRouter } from "./modules/ai/ai.routes";
 import { createAuthRouter } from "./modules/auth/auth.routes";
 import { booksRouter } from "./modules/books/books.routes";
 import { chaptersRouter } from "./modules/chapters/chapters.routes";
@@ -17,6 +19,8 @@ import { healthRouter } from "./modules/health/health.routes";
 export interface AppOptions {
   /** Overrides AUTH_RATE_LIMIT_MAX; lets tests exercise the limiter quickly. */
   authRateLimitMax?: number;
+  /** Overrides the configured AI provider; tests pass a fake, or null for "not configured". */
+  llm?: LlmProvider | null;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -50,7 +54,9 @@ export function createApp(options: AppOptions = {}) {
     "/auth",
     createAuthRouter({ rateLimitMax: options.authRateLimitMax ?? env.AUTH_RATE_LIMIT_MAX }),
   );
-  app.use("/books", requireAuth, booksRouter, chaptersRouter, exportRouter);
+  const aiRouter = createAiRouter(options.llm === undefined ? createLlmProvider() : options.llm);
+  app.use("/books", requireAuth, booksRouter, chaptersRouter, exportRouter, aiRouter);
+  app.use("/ai", requireAuth, aiUsageRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

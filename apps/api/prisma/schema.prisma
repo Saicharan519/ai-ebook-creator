@@ -17,8 +17,30 @@ model User {
 
   sessions Session[]
   books    Book[]
+  aiUsage  AiUsage[]
 
   @@map("users")
+}
+
+enum AiKind {
+  outline
+  draft
+  inline
+}
+
+/// One row per AI call, for the daily per-user token quota
+model AiUsage {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  kind         AiKind
+  inputTokens  Int      @map("input_tokens")
+  outputTokens Int      @map("output_tokens")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_usage")
 }
 
 enum BookStatus {
