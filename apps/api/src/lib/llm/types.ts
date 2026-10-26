@@ -3,7 +3,15 @@ export interface LlmUsage {
   outputTokens: number;
 }
 
+/**
+ * How much the model may "think" before answering. More thinking can improve
+ * planning, but it is slower and its tokens come out of maxOutputTokens.
+ */
+export type Reasoning = "minimal" | "low";
+
 export interface LlmRequest {
+  /** Defaults to "minimal" */
+  reasoning?: Reasoning;
   /** Instructions: role, rules, output format */
   system: string;
   /** The task, including any user text (kept clearly separated from instructions) */

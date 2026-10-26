@@ -60,6 +60,9 @@ export function outlinePrompt(
         "The chapters should build on each other and form a complete arc.",
     ),
     temperature: 0.9,
+    // Planning an arc benefits from some thinking; the budget leaves room for it
+    reasoning: "low",
+    maxOutputTokens: 8_192,
   };
 }
 
