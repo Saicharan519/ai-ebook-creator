@@ -11,34 +11,42 @@ AI eBook Creator: an AI writing studio for novels, stories, and notes. Its signa
 
 ## Current state
 
-- `main` holds **v1** (MERN, JavaScript): `backend/` (Express + MongoDB) and `frontend/ebook/` (React + Vite). Legacy code; only bug fixes go here.
-- **v2** is being built on the `v2` branch as a TypeScript monorepo (see the structure below). Check `docs/PLAN.md` for which phase is in progress before starting work.
+- `main` holds **v1** (MERN, JavaScript). Only bug fixes go there.
+- **v2** is being built on the `v2` branch. On that branch the v1 code lives in `legacy/` for reference only. Check `docs/PLAN.md` for which phase is in progress before starting work.
 
 ## v2 structure
 
 ```
 apps/api/          Express 5 + TypeScript REST API
-  src/modules/     One folder per feature: auth, books, chapters, ai, memory, export
-                   Each has: *.routes.ts, *.controller.ts, *.service.ts, *.schema.ts, *.test.ts
-  src/lib/         db (Prisma), llm (LlmProvider), jobs (pg-boss), env, errors
-  prisma/          schema.prisma + migrations
-apps/web/          React 19 + Vite + TypeScript
-  src/features/    Feature folders mirroring the API modules
-  src/lib/         API client, auth, query client
-packages/shared/   Zod schemas + types shared by api and web
-docs/              PRD, plan, architecture notes
+  src/modules/     One folder per feature: health, auth, books, chapters, ai, memory, export
+                   Each has: *.routes.ts, *.controller.ts, *.service.ts as needed
+  src/lib/         env (Zod-validated), db (Prisma), logger (pino), errors (AppError)
+  src/middleware/  error handler, auth, etc.
+  src/generated/   Prisma client (generated, gitignored; never edit)
+  prisma/          schema.prisma + migrations (config in prisma.config.ts, Prisma 7)
+  test/            API tests (Vitest + Supertest) against a real test database
+apps/web/          React 19 + Vite + TypeScript + Tailwind 4
+  src/features/    Feature folders; component tests sit next to the component
+  src/lib/         API client (apiRequest), query client
+  src/pages/       Route-level components; routes are in src/router.tsx
+packages/shared/   Zod schemas + types shared by api and web (shipped as TS source)
+legacy/            v1 code, reference only
+docs/              PRD, plan
 ```
 
 ## Commands (v2)
 
 ```bash
-docker compose up -d          # start Postgres + pgvector
-npm install                   # install all workspaces
-npm run dev                   # api + web in watch mode
-npm run test                  # all tests
-npm run lint && npm run typecheck
-npm run db:migrate            # prisma migrate dev
+docker compose up -d          # Postgres 17 + pgvector on localhost:5433 (5432 is taken locally)
+npm install                   # all workspaces; postinstall runs prisma generate
+npm run dev                   # api (:8000) + web (:5173) in watch mode
+npm test                      # all tests; API tests use the ebook_test database (apps/api/.env.test)
+npm run lint && npm run typecheck && npm run format:check
+npm run build
+npm run db:migrate            # prisma migrate dev (create + apply a migration)
 ```
+
+CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, and build on every push.
 
 ## Conventions
 

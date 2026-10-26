@@ -19,6 +19,8 @@
 <!-- Add a short GIF of the full flow here: create book → AI outline → generate chapter → export PDF -->
 <!-- ![Demo](docs/screenshots/demo.gif) -->
 
+> **This is the `v2` branch: a full rewrite in progress** (TypeScript, PostgreSQL, Story Memory). See [docs/PRD.md](docs/PRD.md) for what is being built and [docs/PLAN.md](docs/PLAN.md) for progress. Apart from **Getting Started**, the sections below still describe v1, whose code now lives in `legacy/`.
+
 ## About
 
 Writing a book usually stalls at two points: the blank page and the formatting at the end. This app handles both. You describe a topic, Gemini drafts a chapter outline, you generate or write each chapter in a markdown editor, and then you download a typeset **PDF** or **Word (DOCX)** file with a cover page.
@@ -82,51 +84,47 @@ The backend follows a **routes → middleware → controllers → services → m
 - **XSS:** chapter content is HTML-escaped before the preview and reader render it.
 - **Session expiry:** expired or invalid tokens get a single 401 response, and the frontend clears the session and redirects to login.
 
-## Getting Started
+## Getting Started (v2)
 
 ### Prerequisites
 
-- Node.js 18+
-- A MongoDB Atlas cluster (the free tier works)
-- A Google Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
+- Node.js 22+ (see `.nvmrc`)
+- Docker Desktop (runs the local Postgres database)
 
-### 1. Clone and install
+### Run locally
 
 ```bash
 git clone https://github.com/Saicharan519/ai-ebook-creator.git
 cd ai-ebook-creator
-cd backend && npm install
-cd ../frontend/ebook && npm install
+git switch v2
+
+docker compose up -d                       # Postgres 17 + pgvector on localhost:5433
+cp apps/api/.env.example apps/api/.env
+npm install                                # all workspaces; also generates the Prisma client
+npm run db:migrate                         # create the tables
+npm run dev                                # API on :8000, web app on :5173
 ```
 
-### 2. Configure environment variables
+Open http://localhost:5173. The page shows whether the API and database are reachable.
 
-**`backend/.env`** (copy from `backend/.env.example`):
+### Useful commands
 
-| Variable | Description |
+| Command | What it does |
 |---|---|
-| `MONGO_URI` | MongoDB connection string |
-| `JWT_SECRET` | Long random string used to sign tokens |
-| `PORT` | API port (default `8000`) |
-| `GEMINI_API_KEY` | Google Gemini API key |
+| `npm test` | Runs every test (the API tests use a separate `ebook_test` database) |
+| `npm run lint` / `npm run typecheck` | ESLint / TypeScript checks for all workspaces |
+| `npm run format` | Formats the code with Prettier |
+| `npm run build` | Production builds of the API and the web app |
 
-**`frontend/ebook/.env.local`** (copy from `frontend/ebook/.env.example`):
+### Repository layout
 
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE_URL` | Backend URL. Defaults to `http://localhost:8000` |
-
-### 3. Run
-
-```bash
-# Terminal 1: API on http://localhost:8000
-cd backend && npm run dev
-
-# Terminal 2: app on http://localhost:5173
-cd frontend/ebook && npm run dev
 ```
-
-Check the API with `GET http://localhost:8000/health`. It reports whether MongoDB is connected.
+apps/api/          Express 5 + TypeScript API, Prisma schema and migrations
+apps/web/          React 19 + Vite + TypeScript frontend
+packages/shared/   Zod schemas and types used by both apps
+legacy/            v1 code (MERN), kept for reference until v2 replaces it
+docs/              PRD and build plan
+```
 
 ## API Reference
 

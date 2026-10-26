@@ -1,0 +1,6 @@
+legacy/
+dist/
+coverage/
+apps/api/src/generated/
+package-lock.json
+*.md

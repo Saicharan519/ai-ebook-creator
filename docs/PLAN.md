@@ -8,25 +8,25 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 
 ---
 
-## Phase 0: Foundation (2–3 days)
+## Phase 0: Foundation (2–3 days) ✅ Done
 
 **Goal:** an empty but working monorepo. `npm run dev` starts the API and the web app, and CI passes.
 
-- [ ] Create the `v2` branch. Move v1 code into `legacy/` for reference (deleted at the end).
-- [ ] Set up the npm workspaces monorepo:
+- [x] Create the `v2` branch. Move v1 code into `legacy/` for reference (deleted at the end).
+- [x] Set up the npm workspaces monorepo:
   ```
   apps/api        Express 5 + TypeScript
   apps/web        React 19 + Vite + TypeScript
   packages/shared Zod schemas + shared types
   ```
-- [ ] Shared `tsconfig` (strict), ESLint, and Prettier
-- [ ] `docker-compose.yml` with **Postgres 16 + pgvector** only
-- [ ] Prisma set up with a first migration (`User`)
-- [ ] Env validation with Zod: the app refuses to start if a variable is missing or wrong
-- [ ] API skeleton: `/health`, a central error handler, request logging (pino), CORS allow-list, helmet
-- [ ] Web skeleton: router, TanStack Query, Tailwind, and an API client
-- [ ] Vitest in both apps, plus one passing test each
-- [ ] GitHub Actions: install → lint → typecheck → test (with a Postgres service)
+- [x] Shared `tsconfig` (strict), ESLint, and Prettier
+- [x] `docker-compose.yml` with **Postgres 16 + pgvector** only
+- [x] Prisma set up with a first migration (`User`)
+- [x] Env validation with Zod: the app refuses to start if a variable is missing or wrong
+- [x] API skeleton: `/health`, a central error handler, request logging (pino), CORS allow-list, helmet
+- [x] Web skeleton: router, TanStack Query, Tailwind, and an API client
+- [x] Vitest in both apps, plus one passing test each
+- [x] GitHub Actions: install → lint → typecheck → test (with a Postgres service)
 
 **Done when:** a fresh clone followed by `docker compose up -d && npm install && npm run dev` works, and CI passes.
 

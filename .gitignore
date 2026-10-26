@@ -1,4 +1,4 @@
-# Environment variables — NEVER commit these
+# Environment variables — NEVER commit these (.env.test holds only local Docker values)
 .env
 .env.local
 .env.production
@@ -6,12 +6,18 @@
 
 # Dependencies
 node_modules/
-**/node_modules/
 
 # Build output
 dist/
 build/
-.next/
+coverage/
+
+# Generated code
+apps/api/src/generated/
+
+# User uploads
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
 
 # Logs
 *.log
@@ -24,7 +30,6 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
-
 
 # secrets cleanup artifact — safe to delete
 secrets.txt
