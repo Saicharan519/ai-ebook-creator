@@ -16,8 +16,55 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   sessions Session[]
+  books    Book[]
 
   @@map("users")
+}
+
+enum BookStatus {
+  draft
+  published
+}
+
+model Book {
+  id           String     @id @default(uuid(7)) @db.Uuid
+  ownerId      String     @map("owner_id") @db.Uuid
+  title        String
+  subtitle     String     @default("")
+  author       String
+  genre        String     @default("")
+  premise      String     @default("")
+  writingStyle String     @default("") @map("writing_style")
+  /// Storage key of the cover image, e.g. "covers/<uuid>.png"
+  coverKey     String?    @map("cover_key")
+  status       BookStatus @default(draft)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
+
+  @@index([ownerId, updatedAt])
+  @@map("books")
+}
+
+model Chapter {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  bookId      String   @map("book_id") @db.Uuid
+  /// 0-based order within the book; kept contiguous by the service layer
+  position    Int
+  title       String
+  description String   @default("")
+  /// Chapter text as Markdown
+  content     String   @default("")
+  wordCount   Int      @default(0) @map("word_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId, position])
+  @@map("chapters")
 }
 
 /// One row per refresh token. Tokens are stored hashed and rotated on every

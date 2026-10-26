@@ -17,6 +17,7 @@ apps/api/src/generated/
 
 # User uploads
 apps/api/uploads/*
+apps/api/.test-uploads/
 !apps/api/uploads/.gitkeep
 
 # Logs

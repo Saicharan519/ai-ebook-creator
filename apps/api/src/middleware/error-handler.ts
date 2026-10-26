@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import type { ApiError } from "@ebook/shared";
+import { MulterError } from "multer";
 import { ZodError, z } from "zod";
 import { AppError, NotFoundError } from "../lib/errors";
 
@@ -19,9 +20,21 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     body = {
       error: { code: "VALIDATION_ERROR", message: "Invalid request", details: z.flattenError(err) },
     };
+  } else if (err instanceof MulterError) {
+    const tooLarge = err.code === "LIMIT_FILE_SIZE";
+    status = tooLarge ? 413 : 400;
+    body = {
+      error: {
+        code: tooLarge ? "FILE_TOO_LARGE" : "BAD_UPLOAD",
+        message: tooLarge ? "File is too large" : err.message,
+      },
+    };
   } else if (isBodyParserError(err)) {
     status = err.status;
-    body = { error: { code: "BAD_REQUEST", message: "Malformed request body" } };
+    body =
+      err.status === 413
+        ? { error: { code: "PAYLOAD_TOO_LARGE", message: "Request body is too large" } }
+        : { error: { code: "BAD_REQUEST", message: "Malformed request body" } };
   }
 
   if (status >= 500) {

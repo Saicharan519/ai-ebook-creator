@@ -5,8 +5,13 @@ import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { env } from "./lib/env";
 import { logger } from "./lib/logger";
+import { storage } from "./lib/storage";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import { requireAuth } from "./middleware/require-auth";
 import { createAuthRouter } from "./modules/auth/auth.routes";
+import { booksRouter } from "./modules/books/books.routes";
+import { chaptersRouter } from "./modules/chapters/chapters.routes";
+import { exportRouter } from "./modules/export/export.routes";
 import { healthRouter } from "./modules/health/health.routes";
 
 export interface AppOptions {
@@ -29,11 +34,23 @@ export function createApp(options: AppOptions = {}) {
   app.use(cookieParser());
   app.use(pinoHttp({ logger }));
 
+  // Uploaded covers are public, with unguessable names. The web app is on another
+  // origin, so relax helmet's same-origin resource policy for these files only.
+  app.use(
+    "/uploads",
+    express.static(storage.rootDir, {
+      immutable: true,
+      maxAge: "365d",
+      setHeaders: (res) => res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"),
+    }),
+  );
+
   app.use("/health", healthRouter);
   app.use(
     "/auth",
     createAuthRouter({ rateLimitMax: options.authRateLimitMax ?? env.AUTH_RATE_LIMIT_MAX }),
   );
+  app.use("/books", requireAuth, booksRouter, chaptersRouter, exportRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
