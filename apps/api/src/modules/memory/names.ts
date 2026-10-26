@@ -66,7 +66,9 @@ export function findMatchingEntity<T extends NamedEntity>(
   entities: T[],
   candidate: NamedEntity,
 ): T | undefined {
-  const names = new Set([candidate.name, ...candidate.aliases].map(normalizeName));
+  const names = new Set(
+    [candidate.name, ...candidate.aliases].filter((name) => !isPronoun(name)).map(normalizeName),
+  );
   names.delete("");
   const exact = entities.find((entity) =>
     [entity.name, ...entity.aliases].some((name) => names.has(normalizeName(name))),
@@ -85,4 +87,38 @@ export function findMatchingEntity<T extends NamedEntity>(
     return singles.some((name) => name === words[0] || name === words.at(-1));
   });
   return fits.length === 1 ? fits[0] : undefined;
+}
+
+const PRONOUNS = new Set(
+  "i me my mine we us our you your he him his she her hers they them their it its".split(" "),
+);
+
+/**
+ * Pronouns aren't names. Stored as aliases ("He" for Dr Munro) they would hide
+ * gender contradictions and could merge different characters.
+ */
+export function isPronoun(name: string): boolean {
+  return PRONOUNS.has(normalizeName(name));
+}
+
+/** Words too generic to show two detail labels are about the same thing. */
+const GENERIC_WORDS = new Set(["colour", "color", "name", "type", "kind", "number", "of", "the"]);
+
+/**
+ * Whether two detail labels likely describe the same thing, even when worded
+ * differently: "injury" and "injured hand", "location" and "located". They
+ * share a meaningful word stem. "eye colour" and "hair colour" don't:
+ * "colour" is too generic.
+ */
+export function attributesRelated(a: string, b: string): boolean {
+  if (a === b) return true;
+  const stems = (attribute: string) =>
+    new Set(
+      attribute
+        .split(/[^a-z]+/)
+        .filter((word) => word.length >= 4 && !GENERIC_WORDS.has(word))
+        .map((word) => word.slice(0, 5)),
+    );
+  const first = stems(a);
+  return [...stems(b)].some((stem) => first.has(stem));
 }

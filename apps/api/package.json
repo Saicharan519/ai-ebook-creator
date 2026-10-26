@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "postdb:migrate": "prisma generate",
     "db:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "eval:memory": "tsx eval/run-story-memory-eval.ts"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

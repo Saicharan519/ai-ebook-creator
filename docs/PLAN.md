@@ -77,19 +77,19 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 
 ---
 
-## Phase 3: Story Memory (1.5–2 weeks), the signature feature
+## Phase 3: Story Memory (1.5–2 weeks), the signature feature ✅ Done
 
 **Goal:** the AI remembers the story.
 
-- [ ] pg-boss set up; `extract-chapter` job queued on save, debounced per chapter
-- [ ] Chunking + embeddings → `Chunk` table (pgvector)
-- [ ] Chapter summary job → `Chapter.summary`
-- [ ] Entity and fact extraction (structured JSON + Zod) → `Entity`, `Fact`, `Mention`, with a merge step that matches the same character under different names
-- [ ] **Context builder**: assembles the AI context within a token budget, in the priority order from PRD §8. Unit-tested thoroughly, since this is the core logic.
-- [ ] Hook the context builder into every AI call from Phase 2
-- [ ] Web: Story Bible side panel (list, edit, pin entities and facts; jump to mentions)
-- [ ] **Consistency checker** (F8): candidate conflicts → LLM check → `ConsistencyWarning` → shown in the UI
-- [ ] Evaluation script: a 20-chapter test story with planted contradictions; record the detection rate in the README
+- [x] pg-boss set up; `extract-chapter` job queued on save, debounced per chapter
+- [x] Chunking + embeddings → `Chunk` table (pgvector)
+- [x] Chapter summary job → `Chapter.summary`
+- [x] Entity and fact extraction (structured JSON + Zod) → `Entity`, `Fact`, `Mention`, with a merge step that matches the same character under different names
+- [x] **Context builder**: assembles the AI context within a token budget, in the priority order from PRD §8. Unit-tested thoroughly, since this is the core logic.
+- [x] Hook the context builder into chapter drafts and inline actions (outlines plan new books, so they don't need it)
+- [x] Web: Story Bible side panel (list, edit, pin entities and facts; jump to mentions)
+- [x] **Consistency checker** (F8): candidate conflicts → LLM check → `ConsistencyWarning` → shown in the UI
+- [x] Evaluation script: an 8-chapter story with 7 planted contradictions and 4 explained changes, run 3 times; results in [docs/eval/story-memory.md](eval/story-memory.md)
 
 **Done when:** a character introduced in chapter 2 is described correctly when the AI continues chapter 12, and a planted contradiction gets flagged.
 

@@ -24,6 +24,8 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).default("gemini-3.6-flash"),
   GEMINI_EMBEDDING_MODEL: z.string().min(1).default("gemini-embedding-001"),
+  // Cheaper, faster model for background Story Memory work (separate quota from writing)
+  GEMINI_MEMORY_MODEL: z.string().min(1).default("gemini-3.5-flash-lite"),
   // Story Memory waits this long after the last edit before re-reading a chapter
   MEMORY_DEBOUNCE_SECONDS: z.coerce.number().int().positive().default(30),
   // Input + output tokens one user may spend per UTC day

@@ -22,6 +22,7 @@ export function createLlmProvider(): LlmProvider | null {
   return env.GEMINI_API_KEY
     ? new GeminiProvider(env.GEMINI_API_KEY, env.GEMINI_MODEL, {
         embeddingModel: env.GEMINI_EMBEDDING_MODEL,
+        memoryModel: env.GEMINI_MEMORY_MODEL,
       })
     : null;
 }

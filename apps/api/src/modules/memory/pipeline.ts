@@ -12,11 +12,13 @@ import {
   type Extraction,
   type KnownEntity,
 } from "./memory-prompts";
-import { findMatchingEntity, normalizeAttribute, normalizeName } from "./names";
+import { findMatchingEntity, isPronoun, normalizeAttribute, normalizeName } from "./names";
 
 export type MemoryResult = "processed" | "unchanged" | "missing";
 
-const contentHash = (content: string) => createHash("sha256").update(content).digest("hex");
+export const contentHash = (content: string) => createHash("sha256").update(content).digest("hex");
+
+const IGNORED_ATTRIBUTES = new Set(["type", "kind", "category", "name"]);
 
 /** pgvector's text format, e.g. "[0.1,0.2,…]" */
 const toVectorLiteral = (vector: number[]) => `[${vector.join(",")}]`;
@@ -29,11 +31,13 @@ const toVectorLiteral = (vector: number[]) => `[${vector.join(",")}]`;
  *   4. check the new facts against the rest of the book for contradictions
  *
  * Runs in a background job after edits. If the text hasn't changed since the
- * last run it returns immediately, so repeated jobs are cheap.
+ * last run it returns immediately, so repeated jobs are cheap. `force` re-reads
+ * anyway, for when the author asks to rebuild the Story Bible.
  */
 export async function processChapterMemory(
   llm: LlmProvider,
   chapterId: string,
+  { force = false }: { force?: boolean } = {},
 ): Promise<MemoryResult> {
   const chapter = await prisma.chapter.findUnique({
     where: { id: chapterId },
@@ -44,7 +48,7 @@ export async function processChapterMemory(
   if (!chapter) return "missing";
 
   const hash = contentHash(chapter.content);
-  if (chapter.memoryHash === hash) return "unchanged";
+  if (!force && chapter.memoryHash === hash) return "unchanged";
 
   const { book } = chapter;
 
@@ -173,6 +177,8 @@ async function mergeEntities(
       data: extracted.facts
         .map((fact) => ({ attribute: normalizeAttribute(fact.attribute), value: fact.value }))
         .filter((fact) => {
+          // "type: island" just restates the entity's kind; it adds noise, not consistency
+          if (IGNORED_ATTRIBUTES.has(fact.attribute)) return false;
           const key = `${fact.attribute}|${normalizeName(fact.value)}`;
           if (seen.has(key)) return false;
           seen.add(key);
@@ -183,12 +189,12 @@ async function mergeEntities(
   }
 }
 
-/** Distinct names other than the entity's own name, compared loosely. */
+/** Distinct names other than the entity's own name, compared loosely. Pronouns are dropped. */
 function uniqueNames(names: string[], ownName: string): string[] {
   const seen = new Set([normalizeName(ownName)]);
   return names.filter((name) => {
     const key = normalizeName(name);
-    if (!key || seen.has(key)) return false;
+    if (!key || seen.has(key) || isPronoun(name)) return false;
     seen.add(key);
     return true;
   });

@@ -63,6 +63,16 @@ function toAppError(error: unknown): unknown {
   if (error instanceof Error && error.name === "AbortError") return error;
   if (error instanceof ApiError) {
     logger.warn({ status: error.status, vendorMessage: error.message }, "Gemini request failed");
+    // A 429 is either a short rate limit (wait a minute) or the API key's daily
+    // quota (wait until tomorrow); telling users to "try again in a moment" for
+    // the second would be wrong
+    if (error.status === 429 && /per ?day/i.test(error.message)) {
+      return new AppError(
+        429,
+        "AI_DAILY_LIMIT",
+        "Today's AI limit for this server has been reached. It resets within 24 hours.",
+      );
+    }
     if (error.status === 429 || isTransient(error)) {
       return new AppError(503, "AI_BUSY", "The AI is overloaded right now. Try again in a moment.");
     }
@@ -90,22 +100,40 @@ export class GeminiProvider implements LlmProvider {
   private readonly models: GeminiModels;
   private readonly retryDelaysMs: number[];
   private readonly embeddingModel: string;
+  private readonly memoryModel: string;
 
   constructor(
     apiKey: string,
     private readonly model: string,
-    /** Tests pass a stand-in for the SDK and shorter delays */
-    options: { models?: GeminiModels; retryDelaysMs?: number[]; embeddingModel?: string } = {},
+    options: {
+      /** Tests pass a stand-in for the SDK and shorter delays */
+      models?: GeminiModels;
+      retryDelaysMs?: number[];
+      embeddingModel?: string;
+      /** Model for background Story Memory work; defaults to the main model */
+      memoryModel?: string;
+    } = {},
   ) {
     this.models = options.models ?? new GoogleGenAI({ apiKey }).models;
     this.retryDelaysMs = options.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
     this.embeddingModel = options.embeddingModel ?? "gemini-embedding-001";
+    this.memoryModel = options.memoryModel ?? model;
+  }
+
+  /**
+   * Background memory tasks run on their own model. Each model has its own
+   * quota, so reading chapters never uses up the quota for writing help.
+   */
+  private modelFor(request: LlmRequest): string {
+    return request.task === "memory" || request.task === "consistency"
+      ? this.memoryModel
+      : this.model;
   }
 
   async generate(request: LlmRequest) {
     return this.withRetry(async () => {
       const response = await this.models.generateContent({
-        model: this.model,
+        model: this.modelFor(request),
         contents: request.prompt,
         config: this.config(request),
       });
@@ -155,7 +183,7 @@ export class GeminiProvider implements LlmProvider {
     for (let attempt = 0; ; attempt++) {
       try {
         const stream = await this.models.generateContentStream({
-          model: this.model,
+          model: this.modelFor(request),
           contents: request.prompt,
           config: this.config(request),
         });

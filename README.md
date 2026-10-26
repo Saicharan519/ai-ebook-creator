@@ -128,6 +128,23 @@ legacy/            v1 code (MERN), kept for reference until v2 replaces it
 docs/              PRD and build plan
 ```
 
+## Story Memory (v2)
+
+Long stories drift: by chapter 15 an AI co-writer has forgotten what chapter 3 established. Story Memory keeps a record of the book and feeds the relevant parts into every AI request.
+
+**How it works**
+
+1. **Reading chapters in the background.** Saving a chapter queues a job (pg-boss, stored in Postgres). Jobs are debounced per chapter and skipped when the text hasn't changed.
+2. **Extraction.** The chapter is split into passages and embedded into **pgvector**. One structured model call returns a summary plus characters, places, items and groups, with checkable details (eye colour, age, injuries, alive or dead, location). Entities merge across chapters by name and alias; a lone first or last name joins a full name only when exactly one character fits.
+3. **Consistency checking.** New details are compared with the rest of the book. Cheap matching finds candidate conflicts (same entity, related detail labels, different values), and the model rules out rewordings and changes the story explains. Real contradictions appear as warnings in the Story Bible panel; dismissed ones never come back.
+4. **Context for writing.** Drafts and inline actions get a token-budgeted context in priority order: pinned and relevant Story Bible entries, then summaries of *earlier* chapters only (no spoilers), then passages found by vector similarity. If any part is unavailable, the request continues without it.
+
+Background reading uses a cheaper model (`GEMINI_MEMORY_MODEL`), which has its own quota, so it never uses up the quota for writing help.
+
+**Measured results** ([full report](docs/eval/story-memory.md)): on an 8-chapter test story with 7 planted continuity errors, Story Memory caught **76% (16 of 21 across 3 runs) with zero false alarms**. It correctly ignored changes the story explains: aging over a time skip, a death, a haircut, and a past career.
+
+**Known limitations:** a renamed object (the same boat called two different names) is merged into one entry, not flagged. Borderline cases such as a character's age changing between chapters are only sometimes flagged, because the model can't always tell whether time has passed.
+
 ## API Reference
 
 Every route except register, login, and health requires `Authorization: Bearer <token>`.

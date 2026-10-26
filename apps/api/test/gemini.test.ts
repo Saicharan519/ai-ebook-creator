@@ -77,6 +77,42 @@ describe("GeminiProvider", () => {
     expect(generateContent).toHaveBeenCalledOnce();
   });
 
+  it("reports a used-up daily quota as such, without retrying", async () => {
+    const generateContent = generateMock().mockRejectedValue(
+      new ApiError({
+        status: 429,
+        message:
+          "Quota exceeded for metric: generate_content_free_tier_requests, limit: 20. " +
+          "Generate content requests per day limit exceeded on Free Tier.",
+      }),
+    );
+
+    const error = await provider({ generateContent })
+      .generate(request)
+      .catch((e) => e);
+
+    expect(error).toMatchObject({ statusCode: 429, code: "AI_DAILY_LIMIT" });
+    expect(generateContent).toHaveBeenCalledOnce();
+  });
+
+  it("runs background memory work on the memory model and writing on the main one", async () => {
+    const generateContent = generateMock().mockResolvedValue(response("{}"));
+    const llm = new GeminiProvider("key", "writer-model", {
+      models: { generateContent, generateContentStream: streamMock(), embedContent: vi.fn() },
+      memoryModel: "memory-model",
+    });
+
+    await llm.generate({ ...request, task: "memory" });
+    await llm.generate({ ...request, task: "consistency" });
+    await llm.generate({ ...request, task: "outline" });
+
+    expect(generateContent.mock.calls.map(([params]) => params.model)).toEqual([
+      "memory-model",
+      "memory-model",
+      "writer-model",
+    ]);
+  });
+
   it("retries a stream that fails before any text was sent", async () => {
     const generateContentStream = streamMock()
       .mockRejectedValueOnce(overloaded())

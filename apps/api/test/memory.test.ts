@@ -7,7 +7,12 @@ import { env } from "../src/lib/env";
 import { FakeLlmProvider } from "../src/lib/llm";
 import { chunkText } from "../src/modules/memory/chunker";
 import { PgBossMemoryQueue, type MemoryQueue } from "../src/modules/memory/memory-queue";
-import { findMatchingEntity, normalizeName } from "../src/modules/memory/names";
+import {
+  attributesRelated,
+  findMatchingEntity,
+  isPronoun,
+  normalizeName,
+} from "../src/modules/memory/names";
 import { processChapterMemory } from "../src/modules/memory/pipeline";
 import { bearer, createUser, resetDatabase, type TestUser } from "./helpers";
 import { entity, ScriptedMemoryModel } from "./scripted-model";
@@ -89,6 +94,24 @@ describe("entity matching", () => {
     expect(findMatchingEntity(known, { name: "Morag", aliases: [] })).toBeUndefined();
   });
 
+  it("treats differently worded labels for the same detail as related", () => {
+    expect(attributesRelated("injury", "injured hand")).toBe(true);
+    expect(attributesRelated("location", "located")).toBe(true);
+    expect(attributesRelated("eye colour", "hair colour")).toBe(false);
+    expect(attributesRelated("age", "occupation")).toBe(false);
+  });
+
+  it("never treats a pronoun as a name", () => {
+    const known = [
+      { name: "Dr Munro", aliases: [] },
+      { name: "Callum", aliases: [] },
+    ];
+    expect(isPronoun("He")).toBe(true);
+    expect(isPronoun("Hector")).toBe(false);
+    // "He" must not tie two characters together
+    expect(findMatchingEntity(known, { name: "Morag", aliases: ["he"] })).toBeUndefined();
+  });
+
   it("matches a lone first or last name to a full name, only when it's unambiguous", () => {
     const one = [{ name: "Elspeth Gunn", aliases: [], kind: "character" }];
     const two = [
@@ -143,6 +166,32 @@ describe("processChapterMemory", () => {
 
     expect(await processChapterMemory(llm, chapterId)).toBe("unchanged");
     expect(llm.requests).toHaveLength(calls);
+
+    // ...unless the author asks to rebuild
+    expect(await processChapterMemory(llm, chapterId, { force: true })).toBe("processed");
+    expect(llm.requests.length).toBeGreaterThan(calls);
+  });
+
+  it("drops facts that only restate what kind of thing an entity is", async () => {
+    const chapterId = await addChapter(0, "The island of Eilean Dubh.");
+    llm.script.set(1, {
+      summary: "",
+      entities: [
+        entity(
+          "Eilean Dubh",
+          [
+            ["Type", "island"],
+            ["location", "Scotland"],
+          ],
+          { kind: "place" },
+        ),
+      ],
+    });
+
+    await processChapterMemory(llm, chapterId);
+
+    const [island] = await entities();
+    expect(island!.facts.map((f) => f.attribute)).toEqual(["location"]);
   });
 
   it("merges the same character across chapters and tells the model what's known", async () => {
@@ -246,6 +295,20 @@ describe("consistency checking", () => {
     expect(warning!.fact.value).toBe("brown");
     expect(warning!.conflictingFact.value).toBe("grey");
     expect(warning!.explanation).toBe("Pair 1 disagrees.");
+  });
+
+  it("reports a conflict once, even when several chapters state the same detail", async () => {
+    const ids = [
+      await addChapter(0, "Grey eyes."),
+      await addChapter(1, "Still grey eyes."),
+      await addChapter(2, "Brown eyes now."),
+    ];
+    llm.script.set(1, { summary: "", entities: [entity("Elspeth", [["eye colour", "grey"]])] });
+    llm.script.set(2, { summary: "", entities: [entity("Elspeth", [["eye colour", "grey"]])] });
+    llm.script.set(3, { summary: "", entities: [entity("Elspeth", [["eye colour", "brown"]])] });
+    for (const id of ids) await processChapterMemory(llm, id);
+
+    expect(await warnings()).toHaveLength(1);
   });
 
   it("doesn't ask the model about values that only differ in wording", async () => {

@@ -5,8 +5,11 @@ import { processChapterMemory } from "./pipeline";
 
 /** Schedules Story Memory updates. The routes only see this interface. */
 export interface MemoryQueue {
-  /** Debounced: a burst of saves to one chapter becomes a single job */
-  enqueueChapter(chapterId: string): Promise<void>;
+  /**
+   * Debounced: a burst of saves to one chapter becomes a single job.
+   * `force` re-reads the chapter even if its text hasn't changed.
+   */
+  enqueueChapter(chapterId: string, options?: { force?: boolean }): Promise<void>;
 }
 
 /** For tests, and for servers without AI configured. */
@@ -35,10 +38,12 @@ export class PgBossMemoryQueue implements MemoryQueue {
     await boss.start();
     await boss.createQueue(QUEUE);
 
-    await boss.work<{ chapterId: string }>(QUEUE, async ([job]) => {
+    await boss.work<{ chapterId: string; force?: boolean }>(QUEUE, async ([job]) => {
       if (!job) return;
       const started = Date.now();
-      const result = await processChapterMemory(options.llm, job.data.chapterId);
+      const result = await processChapterMemory(options.llm, job.data.chapterId, {
+        force: job.data.force,
+      });
       logger.info(
         { chapterId: job.data.chapterId, result, ms: Date.now() - started },
         "Story Memory updated",
@@ -48,13 +53,14 @@ export class PgBossMemoryQueue implements MemoryQueue {
     return new PgBossMemoryQueue(boss, options.debounceSeconds);
   }
 
-  async enqueueChapter(chapterId: string) {
+  async enqueueChapter(chapterId: string, { force = false }: { force?: boolean } = {}) {
     await this.boss.sendDebounced(
       QUEUE,
-      { chapterId },
+      { chapterId, force },
       { retryLimit: 3, retryBackoff: true },
       this.debounceSeconds,
-      chapterId,
+      // A separate key, so a forced re-read isn't merged into an ordinary pending update
+      force ? `${chapterId}:force` : chapterId,
     );
   }
 

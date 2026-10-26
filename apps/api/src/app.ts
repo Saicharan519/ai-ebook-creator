@@ -15,6 +15,7 @@ import { booksRouter } from "./modules/books/books.routes";
 import { createChaptersRouter } from "./modules/chapters/chapters.routes";
 import { exportRouter } from "./modules/export/export.routes";
 import { noopMemoryQueue, type MemoryQueue } from "./modules/memory/memory-queue";
+import { createStoryBibleRouter } from "./modules/memory/story-bible.routes";
 import { healthRouter } from "./modules/health/health.routes";
 
 export interface AppOptions {
@@ -57,9 +58,17 @@ export function createApp(options: AppOptions = {}) {
     "/auth",
     createAuthRouter({ rateLimitMax: options.authRateLimitMax ?? env.AUTH_RATE_LIMIT_MAX }),
   );
-  const aiRouter = createAiRouter(options.llm === undefined ? createLlmProvider() : options.llm);
-  const chaptersRouter = createChaptersRouter(options.memoryQueue ?? noopMemoryQueue);
-  app.use("/books", requireAuth, booksRouter, chaptersRouter, exportRouter, aiRouter);
+  const llm = options.llm === undefined ? createLlmProvider() : options.llm;
+  const memoryQueue = options.memoryQueue ?? noopMemoryQueue;
+  app.use(
+    "/books",
+    requireAuth,
+    booksRouter,
+    createChaptersRouter(memoryQueue),
+    exportRouter,
+    createAiRouter(llm),
+    createStoryBibleRouter(memoryQueue, llm !== null),
+  );
   app.use("/ai", requireAuth, aiUsageRouter);
 
   app.use(notFoundHandler);

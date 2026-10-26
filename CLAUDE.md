@@ -69,7 +69,17 @@ CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, and b
 - Never commit `.env` files, uploads, or secrets. Update `.env.example` when adding a variable.
 - Before committing: lint, typecheck, and tests all pass.
 
+## Story Memory (`apps/api/src/modules/memory`)
+
+- `pipeline.ts` processes one chapter (chunks + embeddings, extraction, merge, consistency). It is idempotent by content hash; pass `{ force: true }` to re-read.
+- Jobs run through `MemoryQueue` (pg-boss in `server.ts`, a recording fake in tests). Routes call `memoryQueue.enqueueChapter` and must never fail a save because of the queue.
+- Embeddings live in `chunks.embedding` (`vector(768)`), written and searched with raw SQL.
+- Background tasks (`task: "memory" | "consistency"`) run on `GEMINI_MEMORY_MODEL`; writing tasks on `GEMINI_MODEL`.
+- Prompt or matching changes should be checked with `npm run eval:memory -w @ebook/api` (uses real tokens) and the report in `docs/eval/` updated.
+
 ## Do not
+
+- Do not edit or delete a migration that has been applied; add a new one.
 
 - Do not change the database schema without creating a Prisma migration.
 - Do not add a new dependency when an existing one already covers the need.

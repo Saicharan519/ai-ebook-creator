@@ -1,5 +1,5 @@
 import type { ChapterSummary } from "@ebook/shared";
-import { ArrowLeft, PanelLeft, Settings2 } from "lucide-react";
+import { ArrowLeft, BookMarked, PanelLeft, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { AppHeader } from "../components/layout/AppHeader";
@@ -19,6 +19,7 @@ import { ChapterEditor } from "../features/editor/ChapterEditor";
 import { ChapterSidebar } from "../features/editor/ChapterSidebar";
 import { ExportButtons } from "../features/editor/ExportButtons";
 import { SaveStatusBadge } from "../features/editor/SaveStatusBadge";
+import { StoryBiblePanel } from "../features/story-bible/StoryBiblePanel";
 import type { SaveStatus } from "../features/editor/use-autosave";
 import { ApiRequestError } from "../lib/api";
 import { cn } from "../lib/cn";
@@ -36,6 +37,7 @@ export function EditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
+  const [bibleOpen, setBibleOpen] = useState(false);
   const [toDelete, setToDelete] = useState<ChapterSummary | null>(null);
   const flushRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -133,7 +135,16 @@ export function EditorPage() {
           <Settings2 className="h-4 w-4 shrink-0 text-stone-400" />
         </button>
         <SaveStatusBadge status={saveStatus} />
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            variant={bibleOpen ? "secondary" : "ghost"}
+            size="sm"
+            aria-pressed={bibleOpen}
+            onClick={() => setBibleOpen((open) => !open)}
+          >
+            <BookMarked className="h-4 w-4 text-violet-600" />
+            <span className="hidden lg:inline">Story Bible</span>
+          </Button>
           <ExportButtons bookId={bookId} title={book.data.title} beforeExport={flushPending} />
         </div>
       </AppHeader>
@@ -179,6 +190,16 @@ export function EditorPage() {
             <p className="p-8 text-stone-600">Add a chapter to start writing.</p>
           )}
         </main>
+
+        {bibleOpen && (
+          <aside className="absolute inset-y-0 right-0 z-20 w-80 border-l border-stone-200 bg-stone-50 shadow-lg xl:static xl:shadow-none">
+            <StoryBiblePanel
+              bookId={bookId}
+              onOpenChapter={selectChapter}
+              onClose={() => setBibleOpen(false)}
+            />
+          </aside>
+        )}
       </div>
 
       <OutlineDialog

@@ -3,7 +3,7 @@ import type { LlmProvider } from "../../lib/llm";
 import { logger } from "../../lib/logger";
 import { recordUsage } from "../ai/ai-usage";
 import { consistencyPrompt, verdictsSchema, type FactPair } from "./memory-prompts";
-import { normalizeValue } from "./names";
+import { attributesRelated, normalizeValue } from "./names";
 
 /** Upper bound on pairs sent to the model in one check */
 const MAX_PAIRS = 30;
@@ -11,11 +11,13 @@ const MAX_PAIRS = 30;
 /** Identifies a conflict independently of fact ids, which change when chapters are re-read. */
 export function conflictFingerprint(
   entityId: string,
-  attribute: string,
-  values: [string, string],
+  first: { attribute: string; value: string },
+  second: { attribute: string; value: string },
 ): string {
-  const [a, b] = values.map(normalizeValue).sort();
-  return `${entityId}|${attribute}|${a}|${b}`;
+  const [a, b] = [first, second]
+    .map((fact) => `${fact.attribute}=${normalizeValue(fact.value)}`)
+    .sort();
+  return `${entityId}|${a}|${b}`;
 }
 
 const where = (fact: { chapter: { position: number; title: string } | null }) =>
@@ -25,9 +27,10 @@ const where = (fact: { chapter: { position: number; title: string } | null }) =>
 
 /**
  * Compares the facts just extracted from a chapter with what the rest of the
- * book says. Cheap string checks find candidate pairs (same entity, same
- * detail, different value); the model then rules out pairs that only differ
- * in wording or describe a natural change. Real contradictions become warnings.
+ * book says. Cheap checks find candidate pairs: the same entity, related
+ * detail labels ("injury" / "injured hand"), and different values. The model
+ * then rules out pairs that only differ in wording or describe a natural
+ * change. Real contradictions become warnings.
  */
 export async function checkChapterConsistency(
   llm: LlmProvider,
@@ -46,9 +49,17 @@ export async function checkChapterConsistency(
     },
     include,
   });
-  const dismissed = new Set(
-    (await prisma.dismissedConflict.findMany({ where: { bookId } })).map((d) => d.fingerprint),
-  );
+  // Skip conflicts the author dismissed, and ones already reported: two chapters
+  // stating the same detail would otherwise raise the same conflict twice
+  const known = new Set([
+    ...(await prisma.dismissedConflict.findMany({ where: { bookId } })).map((d) => d.fingerprint),
+    ...(
+      await prisma.consistencyWarning.findMany({
+        where: { bookId, status: "open" },
+        select: { fingerprint: true },
+      })
+    ).map((w) => w.fingerprint),
+  ]);
 
   const candidates = newFacts
     .flatMap((fact) =>
@@ -56,28 +67,34 @@ export async function checkChapterConsistency(
         .filter(
           (other) =>
             other.entityId === fact.entityId &&
-            other.attribute === fact.attribute &&
+            attributesRelated(other.attribute, fact.attribute) &&
             normalizeValue(other.value) !== normalizeValue(fact.value),
         )
         .map((other) => ({
           fact,
           other,
-          fingerprint: conflictFingerprint(fact.entityId, fact.attribute, [
-            fact.value,
-            other.value,
-          ]),
+          fingerprint: conflictFingerprint(fact.entityId, fact, other),
         })),
     )
-    .filter((candidate) => !dismissed.has(candidate.fingerprint))
+    .filter((candidate) => {
+      if (known.has(candidate.fingerprint)) return false;
+      known.add(candidate.fingerprint);
+      return true;
+    })
+    // Exact label matches are the strongest candidates; check those first
+    .sort(
+      (a, b) =>
+        Number(b.fact.attribute === b.other.attribute) -
+        Number(a.fact.attribute === a.other.attribute),
+    )
     .slice(0, MAX_PAIRS);
 
   if (candidates.length === 0) return 0;
 
   const pairs: FactPair[] = candidates.map(({ fact, other }) => ({
     entity: fact.entity.name,
-    attribute: fact.attribute,
-    first: { value: other.value, where: where(other) },
-    second: { value: fact.value, where: where(fact) },
+    first: { attribute: other.attribute, value: other.value, where: where(other) },
+    second: { attribute: fact.attribute, value: fact.value, where: where(fact) },
   }));
 
   const { text, usage } = await llm.generate(consistencyPrompt(pairs));
