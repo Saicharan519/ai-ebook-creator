@@ -21,7 +21,8 @@ apps/api/          Express 5 + TypeScript REST API
   src/modules/     One folder per feature: health, auth, books, chapters, ai, memory, export
                    Each has: *.routes.ts, *.controller.ts, *.service.ts as needed
   src/lib/         env (Zod-validated), db (Prisma), logger (pino), errors (AppError)
-  src/middleware/  error handler, auth, etc.
+  src/middleware/  error handler, requireAuth
+                   Book routes (books, chapters, export) are mounted together at /books behind requireAuth
   src/generated/   Prisma client (generated, gitignored; never edit)
   prisma/          schema.prisma + migrations (config in prisma.config.ts, Prisma 7)
   test/            API tests (Vitest + Supertest) against a real test database
@@ -43,7 +44,7 @@ npm run dev                   # api (:8000) + web (:5173) in watch mode
 npm test                      # all tests; API tests use the ebook_test database (apps/api/.env.test)
 npm run lint && npm run typecheck && npm run format:check
 npm run build
-npm run db:migrate            # prisma migrate dev (create + apply a migration)
+npm run db:migrate -- --name x # create + apply a migration, then regenerate the client
 ```
 
 CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, and build on every push.

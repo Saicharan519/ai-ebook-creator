@@ -99,7 +99,7 @@ cd ai-ebook-creator
 git switch v2
 
 docker compose up -d                       # Postgres 17 + pgvector on localhost:5433
-cp apps/api/.env.example apps/api/.env
+cp apps/api/.env.example apps/api/.env       # then set JWT_ACCESS_SECRET (command in the file)
 npm install                                # all workspaces; also generates the Prisma client
 npm run db:migrate                         # create the tables
 npm run dev                                # API on :8000, web app on :5173

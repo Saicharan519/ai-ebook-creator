@@ -32,29 +32,29 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 
 ---
 
-## Phase 1: Core app (1–1.5 weeks)
+## Phase 1: Core app (1–1.5 weeks) ✅ Done
 
 **Goal:** what v1 does today, rebuilt properly.
 
 **Auth**
-- [ ] Register and login (bcrypt). Access token (15 min) returned in JSON; refresh token in an httpOnly cookie.
-- [ ] `POST /auth/refresh` with token rotation and reuse detection; `POST /auth/logout`; log out of all devices
-- [ ] Rate-limit the auth routes
-- [ ] Web: auth context, silent refresh on 401, protected routes
+- [x] Register and login (bcrypt). Access token (15 min) returned in JSON; refresh token in an httpOnly cookie.
+- [x] `POST /auth/refresh` with token rotation and reuse detection; `POST /auth/logout`; log out of all devices
+- [x] Rate-limit the auth routes
+- [x] Web: auth context, silent refresh on 401, protected routes
 
 **Books and chapters**
-- [ ] Prisma models: `Book`, `Chapter` (with `position`)
-- [ ] REST: books CRUD, chapters CRUD, `PATCH /books/:id/chapters/order`
-- [ ] Every query is scoped to the logged-in user. Tests check that user A can't access user B's books.
-- [ ] Cover upload (local disk in dev, behind a `Storage` interface)
+- [x] Prisma models: `Book`, `Chapter` (with `position`)
+- [x] REST: books CRUD, chapters CRUD, `PATCH /books/:id/chapters/order`
+- [x] Every query is scoped to the logged-in user. Tests check that user A can't access user B's books.
+- [x] Cover upload (local disk in dev, behind a `Storage` interface)
 
 **Editor**
-- [ ] Dashboard with book cards; create-book flow (title, genre, premise, style)
-- [ ] Editor page: chapter sidebar with dnd-kit reorder, and a TipTap editor that saves Markdown
-- [ ] Debounced autosave with a "Saving… / Saved" indicator
+- [x] Dashboard with book cards; create-book flow (title, genre, premise, style)
+- [x] Editor page: chapter sidebar with dnd-kit reorder, and a TipTap editor that saves Markdown
+- [x] Debounced autosave with a "Saving… / Saved" indicator
 
 **Export**
-- [ ] Port the v1 markdown → PDF/DOCX export to TypeScript, with tests that build a sample book and check the output
+- [x] Port the v1 markdown → PDF/DOCX export to TypeScript, with tests that build a sample book and check the output
 
 **Done when:** you can sign up, create a book, write chapters, reorder them, and export PDF/DOCX. There are 25+ API tests.
 
