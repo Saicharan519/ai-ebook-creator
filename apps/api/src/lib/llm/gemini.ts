@@ -1,7 +1,15 @@
 import { ApiError, GoogleGenAI, ThinkingLevel, type GenerateContentConfig } from "@google/genai";
 import { AppError } from "../errors";
 import { logger } from "../logger";
-import type { LlmProvider, LlmRequest, LlmStreamEvent, LlmUsage, Reasoning } from "./types";
+import {
+  EMBEDDING_DIMENSIONS,
+  type EmbeddingPurpose,
+  type LlmProvider,
+  type LlmRequest,
+  type LlmStreamEvent,
+  type LlmUsage,
+  type Reasoning,
+} from "./types";
 
 // Thinking tokens count against maxOutputTokens. With the model's default level a
 // 1,024-token request spent ~980 tokens thinking and returned 30 words, after 7 s.
@@ -13,6 +21,20 @@ const THINKING_LEVELS: Record<Reasoning, ThinkingLevel> = {
 
 /** Waits between attempts when Gemini is temporarily unavailable */
 const DEFAULT_RETRY_DELAYS_MS = [1_000, 3_000];
+
+/** Texts per embedding request; keeps each request comfortably within API limits */
+const EMBED_BATCH_SIZE = 50;
+
+const TASK_TYPES: Record<EmbeddingPurpose, string> = {
+  document: "RETRIEVAL_DOCUMENT",
+  query: "RETRIEVAL_QUERY",
+};
+
+/** Below full size, Gemini embeddings aren't unit length; cosine search expects them to be. */
+function normalize(vector: number[]): number[] {
+  const norm = Math.hypot(...vector) || 1;
+  return vector.map((value) => value / norm);
+}
 
 interface UsageMetadata {
   promptTokenCount?: number;
@@ -59,34 +81,66 @@ function sleep(ms: number, signal?: AbortSignal) {
   });
 }
 
-export type GeminiModels = Pick<GoogleGenAI["models"], "generateContent" | "generateContentStream">;
+export type GeminiModels = Pick<
+  GoogleGenAI["models"],
+  "generateContent" | "generateContentStream" | "embedContent"
+>;
 
 export class GeminiProvider implements LlmProvider {
   private readonly models: GeminiModels;
   private readonly retryDelaysMs: number[];
+  private readonly embeddingModel: string;
 
   constructor(
     apiKey: string,
     private readonly model: string,
     /** Tests pass a stand-in for the SDK and shorter delays */
-    options: { models?: GeminiModels; retryDelaysMs?: number[] } = {},
+    options: { models?: GeminiModels; retryDelaysMs?: number[]; embeddingModel?: string } = {},
   ) {
     this.models = options.models ?? new GoogleGenAI({ apiKey }).models;
     this.retryDelaysMs = options.retryDelaysMs ?? DEFAULT_RETRY_DELAYS_MS;
+    this.embeddingModel = options.embeddingModel ?? "gemini-embedding-001";
   }
 
   async generate(request: LlmRequest) {
+    return this.withRetry(async () => {
+      const response = await this.models.generateContent({
+        model: this.model,
+        contents: request.prompt,
+        config: this.config(request),
+      });
+      return { text: response.text ?? "", usage: toUsage(response.usageMetadata) };
+    }, request.signal);
+  }
+
+  async embed(texts: string[], purpose: EmbeddingPurpose): Promise<number[][]> {
+    const vectors: number[][] = [];
+    for (let start = 0; start < texts.length; start += EMBED_BATCH_SIZE) {
+      const batch = texts.slice(start, start + EMBED_BATCH_SIZE);
+      const response = await this.withRetry(() =>
+        this.models.embedContent({
+          model: this.embeddingModel,
+          contents: batch,
+          config: { taskType: TASK_TYPES[purpose], outputDimensionality: EMBEDDING_DIMENSIONS },
+        }),
+      );
+      const embeddings = response.embeddings ?? [];
+      if (embeddings.length !== batch.length) {
+        throw new AppError(502, "AI_UNAVAILABLE", "The embedding service returned bad data.");
+      }
+      vectors.push(...embeddings.map((embedding) => normalize(embedding.values ?? [])));
+    }
+    return vectors;
+  }
+
+  /** Runs a request, retrying temporary failures with backoff. */
+  private async withRetry<T>(run: () => Promise<T>, signal?: AbortSignal): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       try {
-        const response = await this.models.generateContent({
-          model: this.model,
-          contents: request.prompt,
-          config: this.config(request),
-        });
-        return { text: response.text ?? "", usage: toUsage(response.usageMetadata) };
+        return await run();
       } catch (error) {
         if (isTransient(error) && attempt < this.retryDelaysMs.length) {
-          await sleep(this.retryDelaysMs[attempt]!, request.signal);
+          await sleep(this.retryDelaysMs[attempt]!, signal);
           continue;
         }
         throw toAppError(error);

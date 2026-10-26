@@ -51,6 +51,7 @@ export function outlinePrompt(
   guidance?: string,
 ): LlmRequest {
   return {
+    task: "outline",
     system: `${SYSTEM} You are planning the chapters of a book.`,
     prompt: join(
       bookSection(book),
@@ -68,6 +69,7 @@ export function outlinePrompt(
 
 export function chapterDraftPrompt(book: BookBrief, chapter: ChapterBrief): LlmRequest {
   return {
+    task: "draft",
     system: SYSTEM,
     prompt: join(
       bookSection(book),
@@ -116,6 +118,7 @@ export function inlinePrompt(
   input: InlineRequest,
 ): LlmRequest {
   return {
+    task: "inline",
     system: SYSTEM,
     prompt: join(
       bookSection(book),

@@ -23,6 +23,9 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(["gemini", "fake"]).default("gemini"),
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).default("gemini-3.6-flash"),
+  GEMINI_EMBEDDING_MODEL: z.string().min(1).default("gemini-embedding-001"),
+  // Story Memory waits this long after the last edit before re-reading a chapter
+  MEMORY_DEBOUNCE_SECONDS: z.coerce.number().int().positive().default(30),
   // Input + output tokens one user may spend per UTC day
   AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().positive().default(200_000),
   AI_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),

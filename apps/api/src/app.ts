@@ -12,8 +12,9 @@ import { requireAuth } from "./middleware/require-auth";
 import { aiUsageRouter, createAiRouter } from "./modules/ai/ai.routes";
 import { createAuthRouter } from "./modules/auth/auth.routes";
 import { booksRouter } from "./modules/books/books.routes";
-import { chaptersRouter } from "./modules/chapters/chapters.routes";
+import { createChaptersRouter } from "./modules/chapters/chapters.routes";
 import { exportRouter } from "./modules/export/export.routes";
+import { noopMemoryQueue, type MemoryQueue } from "./modules/memory/memory-queue";
 import { healthRouter } from "./modules/health/health.routes";
 
 export interface AppOptions {
@@ -21,6 +22,8 @@ export interface AppOptions {
   authRateLimitMax?: number;
   /** Overrides the configured AI provider; tests pass a fake, or null for "not configured". */
   llm?: LlmProvider | null;
+  /** Where Story Memory updates are scheduled; the server passes the real job queue */
+  memoryQueue?: MemoryQueue;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -55,6 +58,7 @@ export function createApp(options: AppOptions = {}) {
     createAuthRouter({ rateLimitMax: options.authRateLimitMax ?? env.AUTH_RATE_LIMIT_MAX }),
   );
   const aiRouter = createAiRouter(options.llm === undefined ? createLlmProvider() : options.llm);
+  const chaptersRouter = createChaptersRouter(options.memoryQueue ?? noopMemoryQueue);
   app.use("/books", requireAuth, booksRouter, chaptersRouter, exportRouter, aiRouter);
   app.use("/ai", requireAuth, aiUsageRouter);
 

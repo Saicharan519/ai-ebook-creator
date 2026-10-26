@@ -26,6 +26,7 @@ enum AiKind {
   outline
   draft
   inline
+  memory
 }
 
 /// One row per AI call, for the daily per-user token quota
@@ -63,8 +64,11 @@ model Book {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner    User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   chapters Chapter[]
+  entities           Entity[]
+  warnings           ConsistencyWarning[]
+  dismissedConflicts DismissedConflict[]
 
   @@index([ownerId, updatedAt])
   @@map("books")
@@ -80,10 +84,17 @@ model Chapter {
   /// Chapter text as Markdown
   content     String   @default("")
   wordCount   Int      @default(0) @map("word_count")
+  /// Short AI summary, used as context when writing later chapters
+  summary     String   @default("")
+  /// Hash of the content Story Memory last processed; null if never processed
+  memoryHash  String?  @map("memory_hash")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  book     Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chunks   Chunk[]
+  facts    Fact[]
+  mentions Mention[]
 
   @@index([bookId, position])
   @@map("chapters")
@@ -106,4 +117,131 @@ model Session {
   @@index([userId])
   @@index([familyId])
   @@map("sessions")
+}
+
+/// A passage of chapter text with its embedding, for similarity search
+model Chunk {
+  id        String                     @id @default(uuid(7)) @db.Uuid
+  /// Copied from the chapter so a book's chunks can be searched without a join
+  bookId    String                     @map("book_id") @db.Uuid
+  chapterId String                     @map("chapter_id") @db.Uuid
+  position  Int
+  text      String
+  /// Unit-length Gemini embedding; written and queried with raw SQL (pgvector)
+  embedding Unsupported("vector(768)")
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+  @@index([chapterId])
+  @@map("chunks")
+}
+
+enum EntityKind {
+  character
+  place
+  item
+  group
+}
+
+/// Who created a Story Bible entry. The author's entries are never overwritten by extraction.
+enum MemorySource {
+  ai
+  author
+}
+
+/// A character, place, item, or group in the Story Bible
+model Entity {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  bookId      String       @map("book_id") @db.Uuid
+  kind        EntityKind
+  name        String
+  aliases     String[]     @default([])
+  description String       @default("")
+  /// Pinned entries are always included in the AI's context
+  pinned      Boolean      @default(false)
+  source      MemorySource @default(ai)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  book     Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  facts    Fact[]
+  mentions Mention[]
+
+  @@index([bookId])
+  @@map("entities")
+}
+
+/// A checkable detail about an entity, e.g. ("eye colour", "grey") from chapter 3
+model Fact {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  entityId  String       @map("entity_id") @db.Uuid
+  /// The chapter it was extracted from; null for facts the author added
+  chapterId String?      @map("chapter_id") @db.Uuid
+  attribute String
+  value     String
+  source    MemorySource @default(ai)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  entity      Entity               @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  chapter     Chapter?             @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  warnings    ConsistencyWarning[] @relation("WarningFact")
+  conflictsOf ConsistencyWarning[] @relation("WarningConflictingFact")
+
+  @@index([entityId, attribute])
+  @@index([chapterId])
+  @@map("facts")
+}
+
+/// An entity appearing in a chapter, with a short quote for context
+model Mention {
+  entityId  String @map("entity_id") @db.Uuid
+  chapterId String @map("chapter_id") @db.Uuid
+  excerpt   String @default("")
+
+  entity  Entity  @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@id([entityId, chapterId])
+  @@index([chapterId])
+  @@map("mentions")
+}
+
+enum WarningStatus {
+  open
+  dismissed
+}
+
+/// Two facts about the same entity that contradict each other
+model ConsistencyWarning {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  bookId            String        @map("book_id") @db.Uuid
+  factId            String        @map("fact_id") @db.Uuid
+  conflictingFactId String        @map("conflicting_fact_id") @db.Uuid
+  explanation       String
+  /// Identifies the conflict itself (entity, detail, both values), so a dismissal
+  /// still applies after the chapters are re-read and the facts get new ids
+  fingerprint       String
+  status            WarningStatus @default(open)
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  book            Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  fact            Fact @relation("WarningFact", fields: [factId], references: [id], onDelete: Cascade)
+  conflictingFact Fact @relation("WarningConflictingFact", fields: [conflictingFactId], references: [id], onDelete: Cascade)
+
+  @@unique([factId, conflictingFactId])
+  @@index([bookId, status])
+  @@map("consistency_warnings")
+}
+
+/// A conflict the author said is fine; never raised again for this book
+model DismissedConflict {
+  bookId      String   @map("book_id") @db.Uuid
+  fingerprint String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, fingerprint])
+  @@map("dismissed_conflicts")
 }

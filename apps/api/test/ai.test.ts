@@ -262,6 +262,7 @@ describe("AI safety and limits", () => {
   it("sends an error event when the model fails mid-stream", async () => {
     const failing: LlmProvider = {
       generate: () => Promise.reject(new Error("unused")),
+      embed: () => Promise.reject(new Error("unused")),
       async *stream() {
         yield { type: "text", text: "Half a sen" };
         throw new Error("connection reset");
@@ -284,6 +285,7 @@ describe("AI safety and limits", () => {
     let seen: LlmRequest | undefined;
     const slow: LlmProvider = {
       generate: () => Promise.reject(new Error("unused")),
+      embed: () => Promise.reject(new Error("unused")),
       async *stream(req) {
         seen = req;
         for (let i = 0; i < 100 && !req.signal?.aborted; i++) {

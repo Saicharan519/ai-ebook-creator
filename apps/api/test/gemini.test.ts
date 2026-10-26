@@ -26,6 +26,7 @@ function provider(models: Partial<GeminiModels>) {
     models: {
       generateContent: models.generateContent ?? generateMock(),
       generateContentStream: models.generateContentStream ?? streamMock(),
+      embedContent: models.embedContent ?? vi.fn<GeminiModels["embedContent"]>(),
     },
     retryDelaysMs: [1, 1],
   });
@@ -37,7 +38,7 @@ async function collect(stream: AsyncIterable<LlmStreamEvent>) {
   return events;
 }
 
-const request = { system: "s", prompt: "p" };
+const request = { task: "inline" as const, system: "s", prompt: "p" };
 
 describe("GeminiProvider", () => {
   it("retries a temporary overload and counts thinking tokens as output", async () => {
