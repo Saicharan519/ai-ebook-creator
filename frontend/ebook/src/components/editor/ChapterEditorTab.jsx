@@ -3,6 +3,7 @@ import { Sparkles, Type, Eye, Maximize2 } from "lucide-react";
 import Button from "../ui/Button";
 import InputField from "../ui/InputField";
 import SimpleMDEditor from "./SimpleMDEditor";
+import { escapeHtml } from "../../utils/escapeHtml";
 
 const ChapterEditorTab = ({
   book = {
@@ -23,7 +24,8 @@ const ChapterEditorTab = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   //simple markdown parser
   const formatMarkdown = (content) => {
-    return content
+    // Escape first so only the tags added below can end up as real HTML
+    return escapeHtml(content)
    // Headers
 .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold mb-4 mt-6">$1</h3>')
 .replace(/^## (.*$)/gm, '<h2 class="text-2xl font-bold mb-4 mt-8">$1</h2>')
@@ -34,7 +36,7 @@ const ChapterEditorTab = ({
 .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
 
 // Blockquotes
-.replace(/^> (.*$)/gm,
+.replace(/^&gt; (.*$)/gm,
   '<blockquote class="border-l-4 border-violet-500 pl-4 italic text-gray-700 my-4">$1</blockquote>'
 )
 

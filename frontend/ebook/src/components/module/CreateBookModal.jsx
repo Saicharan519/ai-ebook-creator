@@ -25,7 +25,7 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
   const [chapters, setChapters] = useState([]);
   const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
   const [isFinalizingBook, setIsFinalizingBook] = useState(false);
-  const chaptersCountRef = useRef(null); // ✅ was: useRef(0) — should be null for DOM refs
+  const chaptersCountRef = useRef(null);
 
   const resetModal = () => {
     setStep(1);
@@ -93,18 +93,16 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
       onClose();
       resetModal();
     } catch (error) {
-      console.log("TESR_", bookTitle, chapters); // ✅ Bug 1: added missing comma
       toast.error(error.response?.data?.message || "Failed to create book");
     } finally {
       setIsFinalizingBook(false);
     }
   };
 
-  // ✅ Bug 2 & 3: useEffect was outside the component due to stray closing brace
   useEffect(() => {
     if (step === 2 && chaptersCountRef.current) {
       const scrollableDiv = chaptersCountRef.current;
-      scrollableDiv.scrollTo({ // ✅ Bug 4: was scrollTo {{ }} (double braces)
+      scrollableDiv.scrollTo({
         top: scrollableDiv.scrollHeight,
         behavior: "smooth",
       });
@@ -139,7 +137,6 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
           />
-          {/* ✅ Bug 7: was `inputField` (lowercase) — component names must be capitalized */}
           <InputField
             icon={Hash}
             label="Number of Chapters"
@@ -162,7 +159,7 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
             label="Writing Style"
             value={aiStyle}
             onChange={(e) => setAiStyle(e.target.value)}
-            options={[         // ✅ Bug 6: was closed with }} instead of ]}
+            options={[
               "Informative",
               "Storytelling",
               "Casual",
@@ -178,7 +175,6 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
         </div>
       )}
 
-      {/* ✅ Bug 5: was `(step === 2 &&` — missing opening curly brace */}
       {step === 2 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-6">
@@ -199,7 +195,6 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
           </div>
 
           <div ref={chaptersCountRef} className="space-y-4 max-h-96 overflow-y-auto pr-1">
-            {/* ✅ Bug 8: was `chepters.length` — typo */}
             {chapters.length === 0 ? (
               <div className="text-center py-12 px-4 bg-gray-50 rounded-xl">
                 <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -215,7 +210,6 @@ const CreateBookModal = ({ isOpen, onClose, onBookCreated }) => {
                     <div className="flex items-center justify-center w-6 h-6 bg-violet-200 rounded-full text-violet-500 text-xs font-semibold flex-shrink-0">
                       {index + 1}
                     </div>
-                    {/* ✅ Bug 9: was `<Input>` (not imported) — use native <input> */}
                     <input
                       type="text"
                       value={chapter.title}

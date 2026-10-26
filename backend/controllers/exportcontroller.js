@@ -16,6 +16,19 @@ const fs = require("fs");
 
 const md = new MarkdownIt();
 
+const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+
+// Resolve a stored cover image (e.g. "/uploads/cover-123.png") to a file inside
+// the uploads folder. Only the file name is used, so a value like "../.env" or
+// an absolute path can never point outside uploads.
+const resolveCoverPath = (coverImage) => {
+    if (!coverImage) return null;
+    const fileName = path.basename(coverImage);
+    if (!/\.(jpe?g|png|gif)$/i.test(fileName)) return null;
+    const fullPath = path.join(UPLOADS_DIR, fileName);
+    return fs.existsSync(fullPath) ? fullPath : null;
+};
+
 // Typography configuration for markdown-it
 const DOCK_STYLES = {
     fonts: {
@@ -311,39 +324,37 @@ const exportAsDocuments = async (req, res) => {
 
         // Cover page with image if available
         const coverPage = [];
-        if (book.coverImage && !book.coverImage.includes("pravatar")) {
-            const imagepath = path.isAbsolute(book.coverImage) ? book.coverImage : path.join(__dirname, "..", book.coverImage);
+        const imagepath = resolveCoverPath(book.coverImage);
+        if (imagepath) {
             try {
-                if (fs.existsSync(imagepath)) {
-                    const imageBuffer = fs.readFileSync(imagepath);
-                    coverPage.push(
-                        new Paragraph({
-                            text: "",
-                            spacing: { before: 1000 },
-                        })
-                    );
-                    coverPage.push(
-                        new Paragraph({
-                            children: [
-                                new ImageRun({
-                                    data: imageBuffer,
-                                    transformation: {
-                                        width: 400,
-                                        height: 550,
-                                    },
-                                }),
-                            ],
-                            alignment: AlignmentType.CENTER,
-                            spacing: { before: 200, after: 400 },
-                        })
-                    );
-                    coverPage.push(
-                        new Paragraph({
-                            text: "",
-                            pageBreakBefore: true,
-                        })
-                    );
-                }
+                const imageBuffer = fs.readFileSync(imagepath);
+                coverPage.push(
+                    new Paragraph({
+                        text: "",
+                        spacing: { before: 1000 },
+                    })
+                );
+                coverPage.push(
+                    new Paragraph({
+                        children: [
+                            new ImageRun({
+                                data: imageBuffer,
+                                transformation: {
+                                    width: 400,
+                                    height: 550,
+                                },
+                            }),
+                        ],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 200, after: 400 },
+                    })
+                );
+                coverPage.push(
+                    new Paragraph({
+                        text: "",
+                        pageBreakBefore: true,
+                    })
+                );
             } catch (imgError) {
                 console.error(`Error processing cover image: ${imagepath}`, imgError);
             }
@@ -752,19 +763,17 @@ const exportAsPDF = async (req, res) => {
         doc.pipe(res);
 
         // Cover page with image if available
-        if (book.coverImage && !book.coverImage.includes("pravatar")) {
-            const imagePath = path.isAbsolute(book.coverImage) ? book.coverImage : path.join(__dirname, "..", book.coverImage);
+        const imagePath = resolveCoverPath(book.coverImage);
+        if (imagePath) {
             try {
-                if (fs.existsSync(imagePath)) {
-                    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-                    const pageHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
-                    doc.image(imagePath, doc.page.margins.left, doc.page.margins.top, {
-                        fit: [pageWidth * 0.8, pageHeight * 0.8],
-                        align: "center",
-                        valign: "center",
-                    });
-                    doc.addPage();
-                }
+                const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+                const pageHeight = doc.page.height - doc.page.margins.top - doc.page.margins.bottom;
+                doc.image(imagePath, doc.page.margins.left, doc.page.margins.top, {
+                    fit: [pageWidth * 0.8, pageHeight * 0.8],
+                    align: "center",
+                    valign: "center",
+                });
+                doc.addPage();
             } catch (imgError) {
                 console.error(`Error processing cover image: ${imagePath}`, imgError);
             }

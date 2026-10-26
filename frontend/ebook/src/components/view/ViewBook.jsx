@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import ViewChapterSidebar from './ViewChapterSidebar';
+import { escapeHtml } from '../../utils/escapeHtml';
 
 const ViewBook = ({ book }) => {
   const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
@@ -11,7 +12,8 @@ const ViewBook = ({ book }) => {
 
   // Format content with proper paragraphs and styling
   const formatContent = (content) => {
-    return content
+    // Escape first so only the tags added below can end up as real HTML
+    return escapeHtml(content || '')
       .split('\n\n')
       .filter((paragraph) => paragraph.trim())
       .map((paragraph) => paragraph.trim())

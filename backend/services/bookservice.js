@@ -8,7 +8,11 @@ exports.createBook = async (data) => {
             title: data.title,
             author: data.author,
             subtitle: data.subtitle || "",
-            chepters: data.chapters || [],
+            chepters: (data.chapters || []).map((chapter) => ({
+                title: chapter.title,
+                description: chapter.description || "",
+                content: chapter.content || "",
+            })),
         });
         await book.save();
         return book;
@@ -40,20 +44,26 @@ exports.getBookById = async (bookId) => {
 // Update a book by ID
 exports.updateBook = async (bookId, data) => {
     try {
-        const updateData = { ...data };
-        if (data.chapters !== undefined) {
-            updateData.chepters = data.chapters;
-            delete updateData.chapters;
+        // Only these fields can be changed by the client. Owner and cover image
+        // are never taken from the request body (cover has its own upload route).
+        const allowedFields = ["title", "subtitle", "author", "status"];
+        const updateData = {};
+        for (const field of allowedFields) {
+            if (data[field] !== undefined) {
+                updateData[field] = data[field];
+            }
         }
-        if (data.userId !== undefined) {
-            updateData.userid = data.userId;
-            delete updateData.userId;
+        if (Array.isArray(data.chapters)) {
+            updateData.chepters = data.chapters.map((chapter) => ({
+                title: chapter.title,
+                description: chapter.description || "",
+                content: chapter.content || "",
+            }));
         }
-        if (data.coverImage !== undefined) {
-            updateData.coverimage = data.coverImage;
-            delete updateData.coverImage;
-        }
-        const book = await Book.findByIdAndUpdate(bookId, updateData, { new: true });
+        const book = await Book.findByIdAndUpdate(bookId, updateData, {
+            new: true,
+            runValidators: true,
+        });
         return book;
     } catch (error) {
         throw new Error(`Error updating book: ${error.message}`);

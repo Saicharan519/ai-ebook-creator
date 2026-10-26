@@ -1,5 +1,5 @@
 import axios from "axios";
-import { BASE_URL } from "./Apipath";
+import { BASE_URL, API_PATHS } from "./Apipath";
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -34,7 +34,20 @@ axiosInstance.interceptors.response.use(
   (error) => {
     //handle common globally
     if (error.response) {
-      if (error.response.status === 500) {
+      const requestUrl = error.config?.url || "";
+      const isAuthRequest =
+        requestUrl.includes(API_PATHS.AUTH.LOGIN) ||
+        requestUrl.includes(API_PATHS.AUTH.REGISTER);
+
+      // Token expired or invalid: clear the session and send the user to login.
+      // Login/register 401s (wrong password) are left for the page to show.
+      if (error.response.status === 401 && !isAuthRequest) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      } else if (error.response.status === 500) {
         console.error("Server error. Please try again later.");
       }
     } else if (error.code === "ECONNABORTED") {
