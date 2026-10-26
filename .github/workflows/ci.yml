@@ -29,6 +29,8 @@ jobs:
       DATABASE_URL: postgresql://ebook:ebook@localhost:5432/ebook_test
       CORS_ORIGINS: http://localhost:5173
       LOG_LEVEL: silent
+      JWT_ACCESS_SECRET: ci-secret-that-is-at-least-32-characters-long
+      AUTH_RATE_LIMIT_MAX: 1000
 
     steps:
       - uses: actions/checkout@v7

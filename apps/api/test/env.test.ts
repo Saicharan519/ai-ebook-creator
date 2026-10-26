@@ -4,6 +4,7 @@ import { parseEnv } from "../src/lib/env";
 const valid = {
   DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
   CORS_ORIGINS: "http://localhost:5173, https://app.example.com",
+  JWT_ACCESS_SECRET: "x".repeat(32),
 };
 
 describe("parseEnv", () => {

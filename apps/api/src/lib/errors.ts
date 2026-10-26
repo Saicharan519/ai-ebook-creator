@@ -16,3 +16,15 @@ export class NotFoundError extends AppError {
     super(404, "NOT_FOUND", message);
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = "Authentication required") {
+    super(401, "UNAUTHORIZED", message);
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message: string) {
+    super(409, "CONFLICT", message);
+  }
+}
