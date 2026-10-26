@@ -25,9 +25,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Documentation
-README.md
-**/README.md
 
 # secrets cleanup artifact — safe to delete
 secrets.txt
