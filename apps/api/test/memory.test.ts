@@ -4,60 +4,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import { prisma } from "../src/lib/db";
 import { env } from "../src/lib/env";
-import { FakeLlmProvider, type LlmRequest } from "../src/lib/llm";
+import { FakeLlmProvider } from "../src/lib/llm";
 import { chunkText } from "../src/modules/memory/chunker";
 import { PgBossMemoryQueue, type MemoryQueue } from "../src/modules/memory/memory-queue";
-import type { Extraction } from "../src/modules/memory/memory-prompts";
 import { findMatchingEntity, normalizeName } from "../src/modules/memory/names";
 import { processChapterMemory } from "../src/modules/memory/pipeline";
 import { bearer, createUser, resetDatabase, type TestUser } from "./helpers";
-
-type ExtractedEntity = Extraction["entities"][number];
-
-const entity = (
-  name: string,
-  facts: [string, string][] = [],
-  extra: Partial<ExtractedEntity> = {},
-): ExtractedEntity => ({
-  name,
-  kind: "character",
-  aliases: [],
-  description: `${name} in this chapter.`,
-  excerpt: `${name} appears.`,
-  facts: facts.map(([attribute, value]) => ({ attribute, value })),
-  ...extra,
-});
-
-/**
- * A fake model that answers extraction requests from a script keyed by chapter
- * number, and judges every candidate contradiction according to `judge`.
- */
-class ScriptedMemoryModel extends FakeLlmProvider {
-  script = new Map<number, Extraction>();
-  judge: (pair: number) => boolean = () => true;
-
-  constructor() {
-    super({
-      respond: (req: LlmRequest) => {
-        if (req.task === "memory") {
-          const chapter = Number(/<chapter_(\d+)>/.exec(req.prompt)?.[1]);
-          return JSON.stringify(this.script.get(chapter) ?? { summary: "", entities: [] });
-        }
-        if (req.task === "consistency") {
-          const pairs = req.prompt.match(/^\d+\. /gm)?.length ?? 0;
-          return JSON.stringify({
-            verdicts: Array.from({ length: pairs }, (_, i) => ({
-              pair: i + 1,
-              contradiction: this.judge(i + 1),
-              explanation: `Pair ${i + 1} disagrees.`,
-            })),
-          });
-        }
-        return "unused";
-      },
-    });
-  }
-}
+import { entity, ScriptedMemoryModel } from "./scripted-model";
 
 let llm: ScriptedMemoryModel;
 let alice: TestUser;

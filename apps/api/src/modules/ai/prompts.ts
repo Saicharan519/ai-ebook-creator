@@ -1,6 +1,7 @@
 import type { InlineAction } from "@ebook/shared";
 import type { LlmRequest } from "../../lib/llm";
 import type { BookBrief, ChapterBrief } from "./ai-context";
+import type { MemoryContext } from "./context-builder";
 
 // Prompt-injection hygiene: the author's text always goes inside tags, and the
 // system prompt says tagged text is material to work with, never instructions.
@@ -45,6 +46,31 @@ function outlineSection(book: BookBrief) {
 
 const join = (...parts: string[]) => parts.filter(Boolean).join("\n\n");
 
+/** Story Memory sections, plus the instruction to respect them when there are any. */
+function memorySection(memory: MemoryContext) {
+  const sections = join(
+    tag("story_bible", memory.storyBible),
+    tag("earlier_chapters", memory.earlierChapters),
+    tag("related_passages", memory.relatedPassages),
+  );
+  if (!sections) return "";
+
+  const sources = [
+    memory.storyBible && "<story_bible>",
+    memory.earlierChapters && "<earlier_chapters>",
+  ].filter(Boolean);
+  return join(
+    sections,
+    sources.length
+      ? `Stay consistent with ${sources.join(" and ")}: names, appearances, relationships, ` +
+          "and what has already happened."
+      : "",
+    memory.relatedPassages
+      ? "<related_passages> are earlier text from the book, for reference only; don't copy them."
+      : "",
+  );
+}
+
 export function outlinePrompt(
   book: BookBrief,
   chapterCount: number,
@@ -67,13 +93,18 @@ export function outlinePrompt(
   };
 }
 
-export function chapterDraftPrompt(book: BookBrief, chapter: ChapterBrief): LlmRequest {
+export function chapterDraftPrompt(
+  book: BookBrief,
+  chapter: ChapterBrief,
+  memory: MemoryContext,
+): LlmRequest {
   return {
     task: "draft",
     system: SYSTEM,
     prompt: join(
       bookSection(book),
       outlineSection(book),
+      memorySection(memory),
       tag("previous_chapter_ending", chapter.previousChapterEnding),
       `Write chapter ${chapter.position + 1}, "${chapter.title}".` +
         (chapter.description ? ` What happens: ${chapter.description}` : ""),
@@ -116,12 +147,14 @@ export function inlinePrompt(
   book: BookBrief,
   chapter: ChapterBrief,
   input: InlineRequest,
+  memory: MemoryContext,
 ): LlmRequest {
   return {
     task: "inline",
     system: SYSTEM,
     prompt: join(
       bookSection(book),
+      memorySection(memory),
       `The author is working on chapter ${chapter.position + 1}, "${chapter.title}".`,
       tag("text_before", input.before.slice(-BEFORE_CHARS)),
       tag("selection", input.selection),

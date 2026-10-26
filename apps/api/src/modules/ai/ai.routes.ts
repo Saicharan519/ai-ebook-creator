@@ -10,6 +10,7 @@ import { idParam } from "../../lib/params";
 import { currentUserId } from "../../middleware/require-auth";
 import { loadBookBrief, loadChapterBrief } from "./ai-context";
 import { assertWithinQuota, getUsageToday, recordUsage } from "./ai-usage";
+import { buildMemoryContext } from "./context-builder";
 import { chapterDraftPrompt, inlinePrompt, outlinePrompt } from "./prompts";
 import { streamToClient } from "./sse";
 
@@ -99,7 +100,15 @@ export function createAiRouter(llm: LlmProvider | null) {
       loadBookBrief(userId, bookId),
       loadChapterBrief(userId, bookId, chapterId),
     ]);
-    await stream(res, userId, "draft", chapterDraftPrompt(book, chapter));
+    const memory = await buildMemoryContext(provider(), {
+      bookId,
+      chapterId,
+      chapterPosition: chapter.position,
+      focusText: [chapter.title, chapter.description, chapter.previousChapterEnding.slice(-1_500)]
+        .filter(Boolean)
+        .join("\n\n"),
+    });
+    await stream(res, userId, "draft", chapterDraftPrompt(book, chapter, memory));
   });
 
   router.post("/:bookId/chapters/:chapterId/ai/inline", perUserLimit, async (req, res) => {
@@ -114,7 +123,13 @@ export function createAiRouter(llm: LlmProvider | null) {
       loadBookBrief(userId, bookId),
       loadChapterBrief(userId, bookId, chapterId),
     ]);
-    await stream(res, userId, "inline", inlinePrompt(book, chapter, input));
+    const memory = await buildMemoryContext(provider(), {
+      bookId,
+      chapterId,
+      chapterPosition: chapter.position,
+      focusText: input.selection || input.before.slice(-1_500),
+    });
+    await stream(res, userId, "inline", inlinePrompt(book, chapter, input, memory));
   });
 
   async function stream(res: Response, userId: string, kind: AiKind, request: LlmRequest) {
