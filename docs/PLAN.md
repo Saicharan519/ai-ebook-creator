@@ -108,7 +108,7 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 ## Phase 5: Ship (3–4 days)
 
 - [x] Playwright end-to-end test: signup → create book → AI outline → write (with an AI suggestion) → History → export PDF + EPUB → publish → read logged out; runs in CI
-- [ ] Deploy: Neon (Postgres + pgvector), Render (API), Vercel (web, proxying `/api` to Render); covers stored in Postgres instead of Cloudinary
+- [x] Deploy ([live](https://ebook-peach-xi.vercel.app)): Neon (Postgres + pgvector), Render (API), Vercel (web, proxying `/api` to Render); covers stored in Postgres instead of Cloudinary
 - [x] README: demo GIF, architecture diagram, Story Memory explanation, eval results (live link after deploy)
 - [x] Delete `legacy/` (v2 covers everything v1 did)
 - [x] Merge `v2` into `main` (v1 kept as the `v1` tag)

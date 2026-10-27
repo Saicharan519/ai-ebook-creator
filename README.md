@@ -12,6 +12,10 @@
 ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Google_Gemini-4285F4?style=flat-square&logo=google&logoColor=white)
 
+**[Live demo](https://ebook-peach-xi.vercel.app)** · [Story Memory evaluation](docs/eval/story-memory.md) · [Build plan](docs/PLAN.md)
+
+<sub>The API runs on Render's free tier, so the first request after a quiet spell can take up to a minute while it wakes up.</sub>
+
 </div>
 
 ![Demo: landing page, dashboard, Story Bible with a flagged contradiction, version history, and the public reader](docs/screenshots/demo.gif)
@@ -248,7 +252,7 @@ v2 is a full rewrite of the original MERN version (kept as the [`v1` tag](https:
 
 - [x] Foundation, core app, AI co-writer, Story Memory, versions, branches, EPUB, public reader
 - [x] End-to-end test in CI
-- [ ] Deploy: Neon (Postgres + pgvector), Render (API), Vercel (web), Cloudinary (covers)
+- [x] Deployed: Neon (Postgres + pgvector), Render (API), Vercel (web); covers stored in Postgres
 - [x] Merge `v2` into `main`
 - [ ] Stretch: real-time co-writing (Yjs)
 
