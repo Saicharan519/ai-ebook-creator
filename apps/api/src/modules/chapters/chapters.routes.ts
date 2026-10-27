@@ -5,21 +5,16 @@ import {
   updateChapterInputSchema,
 } from "@ebook/shared";
 import { Router } from "express";
-import { logger } from "../../lib/logger";
 import { idParam } from "../../lib/params";
 import { currentUserId } from "../../middleware/require-auth";
-import type { MemoryQueue } from "../memory/memory-queue";
+import { queueMemoryUpdate as queueUpdate, type MemoryQueue } from "../memory/memory-queue";
 import * as chaptersService from "./chapters.service";
 
 /** Mounted at /books, behind requireAuth. New chapter text is queued for Story Memory. */
 export function createChaptersRouter(memoryQueue: MemoryQueue) {
   const chaptersRouter = Router();
 
-  /** A queue hiccup must never make the author's save fail */
-  const queueMemoryUpdate = (chapterId: string) =>
-    memoryQueue.enqueueChapter(chapterId).catch((error: unknown) => {
-      logger.error({ err: error, chapterId }, "Couldn't queue Story Memory update");
-    });
+  const queueMemoryUpdate = (chapterId: string) => queueUpdate(memoryQueue, chapterId);
 
   chaptersRouter.post("/:bookId/chapters", async (req, res) => {
     const bookId = idParam(req.params.bookId, "Book");

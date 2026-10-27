@@ -95,6 +95,8 @@ model Chapter {
   chunks   Chunk[]
   facts    Fact[]
   mentions Mention[]
+  versions ChapterVersion[]
+  branches ChapterBranch[]
 
   @@index([bookId, position])
   @@map("chapters")
@@ -244,4 +246,55 @@ model DismissedConflict {
 
   @@id([bookId, fingerprint])
   @@map("dismissed_conflicts")
+}
+
+/// Why a version snapshot was taken
+enum VersionReason {
+  /// The author asked for it
+  manual
+  /// Taken at most every 10 minutes while autosaving
+  autosave
+  /// The text just before an AI suggestion was accepted
+  before_ai
+  /// The text just before an older version was restored
+  before_restore
+  /// The main text just before a what-if branch replaced it
+  before_keep
+}
+
+/// A saved copy of a chapter's text at one moment. branchId is null for the main text.
+model ChapterVersion {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  chapterId String        @map("chapter_id") @db.Uuid
+  branchId  String?       @map("branch_id") @db.Uuid
+  reason    VersionReason
+  label     String        @default("")
+  title     String
+  content   String
+  wordCount Int           @map("word_count")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  chapter Chapter        @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  branch  ChapterBranch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId, branchId, createdAt])
+  @@map("chapter_versions")
+}
+
+/// A "what-if" draft of a chapter. It has its own text until the author keeps it
+/// (it replaces the main text) or discards it. Story Memory only reads the main text.
+model ChapterBranch {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  chapterId String   @map("chapter_id") @db.Uuid
+  name      String
+  content   String
+  wordCount Int      @map("word_count")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  chapter  Chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  versions ChapterVersion[]
+
+  @@unique([chapterId, name])
+  @@map("chapter_branches")
 }

@@ -4,7 +4,7 @@ export const bookStatusSchema = z.enum(["draft", "published"]);
 
 const title = z.string().trim().min(1, "Title is required").max(200);
 // About 80k words; generous for one chapter, and keeps requests under the 1 MB body limit
-const CHAPTER_CONTENT_MAX = 500_000;
+export const CHAPTER_CONTENT_MAX = 500_000;
 
 // ---- Inputs ----
 

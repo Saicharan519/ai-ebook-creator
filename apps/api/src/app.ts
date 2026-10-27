@@ -17,6 +17,7 @@ import { exportRouter } from "./modules/export/export.routes";
 import { noopMemoryQueue, type MemoryQueue } from "./modules/memory/memory-queue";
 import { createStoryBibleRouter } from "./modules/memory/story-bible.routes";
 import { healthRouter } from "./modules/health/health.routes";
+import { createVersionsRouter } from "./modules/versions/versions.routes";
 
 export interface AppOptions {
   /** Overrides AUTH_RATE_LIMIT_MAX; lets tests exercise the limiter quickly. */
@@ -65,6 +66,7 @@ export function createApp(options: AppOptions = {}) {
     requireAuth,
     booksRouter,
     createChaptersRouter(memoryQueue),
+    createVersionsRouter(memoryQueue),
     exportRouter,
     createAiRouter(llm),
     createStoryBibleRouter(memoryQueue, llm !== null),

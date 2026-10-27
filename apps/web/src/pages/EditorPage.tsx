@@ -1,5 +1,5 @@
 import type { ChapterSummary } from "@ebook/shared";
-import { ArrowLeft, BookMarked, PanelLeft, Settings2 } from "lucide-react";
+import { ArrowLeft, BookMarked, History, PanelLeft, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { AppHeader } from "../components/layout/AppHeader";
@@ -20,6 +20,9 @@ import { ChapterSidebar } from "../features/editor/ChapterSidebar";
 import { ExportButtons } from "../features/editor/ExportButtons";
 import { SaveStatusBadge } from "../features/editor/SaveStatusBadge";
 import { StoryBiblePanel } from "../features/story-bible/StoryBiblePanel";
+import { BranchBar } from "../features/versions/BranchBar";
+import { HistoryPanel } from "../features/versions/HistoryPanel";
+import { useBranch, useBranches } from "../features/versions/versions-api";
 import type { SaveStatus } from "../features/editor/use-autosave";
 import { ApiRequestError } from "../lib/api";
 import { cn } from "../lib/cn";
@@ -37,7 +40,9 @@ export function EditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
-  const [bibleOpen, setBibleOpen] = useState(false);
+  const [aside, setAside] = useState<"bible" | "history" | null>(null);
+  /** Bumped when the text is replaced (restore, keep), so the editor reloads it */
+  const [revision, setRevision] = useState(0);
   const [toDelete, setToDelete] = useState<ChapterSummary | null>(null);
   const flushRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -47,6 +52,10 @@ export function EditorPage() {
     ? requestedId
     : (chapters[0]?.id ?? null);
   const chapter = useChapter(bookId, selectedId);
+  const branches = useBranches(bookId, selectedId);
+  const requestedBranch = searchParams.get("branch");
+  const activeBranch = branches.data?.find((b) => b.id === requestedBranch) ?? null;
+  const branch = useBranch(bookId, selectedId, activeBranch?.id ?? null);
 
   const selectChapter = useCallback(
     (chapterId: string) => {
@@ -55,6 +64,20 @@ export function EditorPage() {
     },
     [setSearchParams],
   );
+
+  const switchBranch = useCallback(
+    (branchId: string | null) => {
+      if (!selectedId) return;
+      setSearchParams(
+        branchId ? { chapter: selectedId, branch: branchId } : { chapter: selectedId },
+        { replace: true },
+      );
+    },
+    [selectedId, setSearchParams],
+  );
+
+  const toggleAside = (panel: "bible" | "history") =>
+    setAside((open) => (open === panel ? null : panel));
 
   // Warn before closing the tab with unsaved text
   useEffect(() => {
@@ -137,10 +160,22 @@ export function EditorPage() {
         <SaveStatusBadge status={saveStatus} />
         <div className="ml-auto flex items-center gap-1">
           <Button
-            variant={bibleOpen ? "secondary" : "ghost"}
+            variant={aside === "history" ? "secondary" : "ghost"}
             size="sm"
-            aria-pressed={bibleOpen}
-            onClick={() => setBibleOpen((open) => !open)}
+            aria-pressed={aside === "history"}
+            aria-label="History"
+            disabled={!selectedId}
+            onClick={() => toggleAside("history")}
+          >
+            <History className="h-4 w-4 text-violet-600" />
+            <span className="hidden lg:inline">History</span>
+          </Button>
+          <Button
+            variant={aside === "bible" ? "secondary" : "ghost"}
+            size="sm"
+            aria-pressed={aside === "bible"}
+            aria-label="Story Bible"
+            onClick={() => toggleAside("bible")}
           >
             <BookMarked className="h-4 w-4 text-violet-600" />
             <span className="hidden lg:inline">Story Bible</span>
@@ -170,7 +205,7 @@ export function EditorPage() {
         </aside>
 
         <main className="min-w-0 flex-1 overflow-y-auto">
-          {chapter.isPending && selectedId ? (
+          {(chapter.isPending && selectedId) || (activeBranch && branch.isPending) ? (
             <div className="flex justify-center py-20">
               <Spinner className="h-6 w-6 text-violet-600" />
             </div>
@@ -178,26 +213,58 @@ export function EditorPage() {
             <p role="alert" className="m-8 rounded-lg bg-red-50 px-4 py-3 text-red-700">
               Couldn't load this chapter. {errorMessage(chapter.error)}
             </p>
+          ) : branch.isError ? (
+            <p role="alert" className="m-8 rounded-lg bg-red-50 px-4 py-3 text-red-700">
+              Couldn't load this what-if branch. {errorMessage(branch.error)}
+            </p>
           ) : chapter.data ? (
-            <ChapterEditor
-              key={chapter.data.id}
-              bookId={bookId}
-              chapter={chapter.data}
-              onStatusChange={setSaveStatus}
-              flushRef={flushRef}
-            />
+            <>
+              <BranchBar
+                bookId={bookId}
+                chapterId={chapter.data.id}
+                branches={branches.data ?? []}
+                activeBranch={activeBranch}
+                onSwitch={(branchId) => {
+                  void flushPending().then(() => switchBranch(branchId));
+                }}
+                flushPending={flushPending}
+                onKept={() => setRevision((r) => r + 1)}
+              />
+              <ChapterEditor
+                key={`${chapter.data.id}:${activeBranch?.id ?? "main"}:${revision}`}
+                bookId={bookId}
+                chapter={chapter.data}
+                branch={activeBranch ? (branch.data ?? null) : null}
+                onStatusChange={setSaveStatus}
+                flushRef={flushRef}
+              />
+            </>
           ) : (
             <p className="p-8 text-stone-600">Add a chapter to start writing.</p>
           )}
         </main>
 
-        {bibleOpen && (
+        {aside && (
           <aside className="absolute inset-y-0 right-0 z-20 w-80 border-l border-stone-200 bg-stone-50 shadow-lg xl:static xl:shadow-none">
-            <StoryBiblePanel
-              bookId={bookId}
-              onOpenChapter={selectChapter}
-              onClose={() => setBibleOpen(false)}
-            />
+            {aside === "bible" ? (
+              <StoryBiblePanel
+                bookId={bookId}
+                onOpenChapter={selectChapter}
+                onClose={() => setAside(null)}
+              />
+            ) : selectedId ? (
+              <HistoryPanel
+                key={`${selectedId}:${activeBranch?.id ?? "main"}`}
+                bookId={bookId}
+                chapterId={selectedId}
+                branch={activeBranch}
+                currentContent={(activeBranch ? branch.data?.content : chapter.data?.content) ?? ""}
+                flushPending={flushPending}
+                onRestored={() => setRevision((r) => r + 1)}
+                onOpenBranch={switchBranch}
+                onClose={() => setAside(null)}
+              />
+            ) : null}
           </aside>
         )}
       </div>

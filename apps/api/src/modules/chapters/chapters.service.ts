@@ -9,9 +9,10 @@ import {
 import { prisma } from "../../lib/db";
 import { AppError, NotFoundError } from "../../lib/errors";
 import { findOwnedBook } from "../books/books.service";
+import { snapshotIfDue } from "../versions/snapshots";
 import { toChapterDto, toChapterSummaryDto } from "./chapters.dto";
 
-async function findOwnedChapter(userId: string, bookId: string, chapterId: string) {
+export async function findOwnedChapter(userId: string, bookId: string, chapterId: string) {
   const chapter = await prisma.chapter.findFirst({
     where: { id: chapterId, bookId, book: { ownerId: userId } },
   });
@@ -99,18 +100,22 @@ export async function updateChapter(
   chapterId: string,
   input: UpdateChapterInput,
 ): Promise<Chapter> {
-  await findOwnedChapter(userId, bookId, chapterId);
+  const previous = await findOwnedChapter(userId, bookId, chapterId);
 
-  const [chapter] = await prisma.$transaction([
-    prisma.chapter.update({
+  const chapter = await prisma.$transaction(async (tx) => {
+    if (input.content !== undefined && input.content !== previous.content) {
+      await snapshotIfDue(tx, { chapterId, branchId: null }, previous);
+    }
+    const updated = await tx.chapter.update({
       where: { id: chapterId },
       data: {
         ...input,
         ...(input.content !== undefined && { wordCount: countWords(input.content) }),
       },
-    }),
-    touchBook(bookId),
-  ]);
+    });
+    await tx.book.update({ where: { id: bookId }, data: { updatedAt: new Date() } });
+    return updated;
+  });
 
   return toChapterDto(chapter);
 }

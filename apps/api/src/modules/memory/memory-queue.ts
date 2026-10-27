@@ -15,6 +15,13 @@ export interface MemoryQueue {
 /** For tests, and for servers without AI configured. */
 export const noopMemoryQueue: MemoryQueue = { enqueueChapter: async () => {} };
 
+/** Queues a chapter after its text changed. A queue hiccup must never make the author's save fail. */
+export function queueMemoryUpdate(queue: MemoryQueue, chapterId: string): Promise<void> {
+  return queue.enqueueChapter(chapterId).catch((error: unknown) => {
+    logger.error({ err: error, chapterId }, "Couldn't queue Story Memory update");
+  });
+}
+
 const QUEUE = "chapter-memory";
 
 /**
