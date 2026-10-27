@@ -4,7 +4,7 @@
 
 **A writing studio for novels and long stories, with an AI co-writer that remembers your characters, places, and plot across every chapter.**
 
-[![CI](https://github.com/Saicharan519/ai-ebook-creator/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/Saicharan519/ai-ebook-creator/actions/workflows/ci.yml)
+[![CI](https://github.com/Saicharan519/ai-ebook-creator/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Saicharan519/ai-ebook-creator/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
 ![Express](https://img.shields.io/badge/Express_5-000000?style=flat-square&logo=express&logoColor=white)
@@ -179,7 +179,6 @@ Tests never call the real AI: the API takes a `FakeLlmProvider`. CI runs formatt
 ```bash
 git clone https://github.com/Saicharan519/ai-ebook-creator.git
 cd ai-ebook-creator
-git switch v2
 
 docker compose up -d                       # Postgres 17 + pgvector on localhost:5433
 cp apps/api/.env.example apps/api/.env     # then set JWT_ACCESS_SECRET (the file shows how)
@@ -245,12 +244,12 @@ The web app talks to the API through its own `/api` path, so the refresh cookie 
 
 ## Status and roadmap
 
-v2 is a full rewrite of the original MERN version (still in the `main` branch). The build plan and progress are in [docs/PLAN.md](docs/PLAN.md).
+v2 is a full rewrite of the original MERN version (kept as the [`v1` tag](https://github.com/Saicharan519/ai-ebook-creator/tree/v1)). The build plan and progress are in [docs/PLAN.md](docs/PLAN.md).
 
 - [x] Foundation, core app, AI co-writer, Story Memory, versions, branches, EPUB, public reader
 - [x] End-to-end test in CI
 - [ ] Deploy: Neon (Postgres + pgvector), Render (API), Vercel (web), Cloudinary (covers)
-- [ ] Merge `v2` into `main`
+- [x] Merge `v2` into `main`
 - [ ] Stretch: real-time co-writing (Yjs)
 
 ## Author

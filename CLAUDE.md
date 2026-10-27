@@ -11,8 +11,9 @@ AI eBook Creator: an AI writing studio for novels, stories, and notes. Its signa
 
 ## Current state
 
-- `main` holds **v1** (MERN, JavaScript). Only bug fixes go there.
-- **v2** is being built on the `v2` branch and replaces v1 entirely (the v1 code was removed from this branch; it's in `main`'s history). Check `docs/PLAN.md` for which phase is in progress before starting work.
+- `main` holds **v2** (TypeScript monorepo). The original MERN version is tagged **`v1`**.
+- Check `docs/PLAN.md` for which phase is in progress before starting work.
+- Deployment: Neon (database), Render (API, `render.yaml`), Vercel (web, `apps/web/vercel.json` proxies `/api` to Render).
 
 ## v2 structure
 
