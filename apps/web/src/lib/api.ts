@@ -1,7 +1,9 @@
 import { apiErrorSchema, authResponseSchema, type AuthResponse } from "@ebook/shared";
 import type { z } from "zod";
 
-export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// In production the API is reached through this site's own /api proxy (see vercel.json)
+export const API_URL =
+  import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "/api" : "http://localhost:8000");
 
 /** An error response from the API, with the code and message it sent. */
 export class ApiRequestError extends Error {

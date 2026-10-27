@@ -1,0 +1,46 @@
+# Render Blueprint for the API: Render → New → Blueprint → pick this repository.
+# The database is on Neon and the web app on Vercel, which proxies /api here.
+services:
+  - type: web
+    name: ai-ebook-creator-api
+    runtime: node
+    region: singapore # same region as the Neon database
+    plan: free
+    branch: main
+    # Dev dependencies are needed to build (tsup) and to run migrations (prisma)
+    buildCommand: npm ci --include=dev && npm run build -w @ebook/api
+    # Applies any new migrations, then starts the server
+    startCommand: npm run db:deploy && node apps/api/dist/server.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: NODE_ENV
+        value: production
+      # Neon connection string (the direct one, not the "-pooler" host)
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      # The Vercel site, e.g. https://ai-ebook-creator.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
+      # The Vercel site plus /api, e.g. https://ai-ebook-creator.vercel.app/api
+      - key: PUBLIC_API_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: AI_PROVIDER
+        value: gemini
+      - key: STORAGE_DRIVER
+        value: database
+      - key: AUTH_COOKIE_PATH
+        value: /api/auth
+      - key: AUTH_COOKIE_SAMESITE
+        value: lax
+      # Browser → Vercel proxy → Render's load balancer → this app
+      - key: TRUST_PROXY_HOPS
+        value: "2"
+      - key: LOG_LEVEL
+        value: info

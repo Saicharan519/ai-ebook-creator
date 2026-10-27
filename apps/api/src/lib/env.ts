@@ -15,8 +15,19 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32, "must be at least 32 characters"),
   // Login/register attempts allowed per IP in a 15-minute window
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
+  // Proxies between the internet and this app, so rate limits see real client IPs.
+  // Render alone is 1; Vercel's /api proxy in front of Render makes it 2.
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
+  // Where the browser sends the refresh cookie. Behind the /api proxy this is /api/auth.
+  AUTH_COOKIE_PATH: z.string().startsWith("/").default("/auth"),
+  // "lax" when the web app and API share a site (locally, or through the /api proxy);
+  // "none" only if they are served from different sites
+  AUTH_COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
   // Public base URL of this API; used to build links to uploaded files
   PUBLIC_API_URL: z.url().default("http://localhost:8000"),
+  // "disk" keeps uploads in UPLOAD_DIR; "database" keeps them in Postgres (for hosts
+  // whose disk is wiped on restart, like Render's free tier)
+  STORAGE_DRIVER: z.enum(["disk", "database"]).default("disk"),
   // Folder for uploaded files, relative to apps/api
   UPLOAD_DIR: z.string().min(1).default("uploads"),
   // "fake" streams placeholder text: for tests and for trying the app without an API key

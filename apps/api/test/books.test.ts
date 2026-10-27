@@ -1,6 +1,4 @@
 import { bookSchema, bookSummarySchema, type Book } from "@ebook/shared";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
@@ -29,8 +27,9 @@ async function createBook(user: TestUser, input: Record<string, unknown> = {}): 
   return bookSchema.parse(res.body);
 }
 
-function coverFilePath(coverUrl: string) {
-  return path.join(storage.rootDir, coverUrl.split("/uploads/")[1]!);
+/** Whether the file behind a cover URL is still in storage (disk or database) */
+async function isStored(coverUrl: string) {
+  return (await storage.read(coverUrl.split("/uploads/")[1]!)) !== null;
 }
 
 describe("books", () => {
@@ -142,8 +141,15 @@ describe("book covers", () => {
 
     const second = bookSchema.parse((await upload().expect(200)).body);
     expect(second.coverUrl).not.toBe(first.coverUrl);
-    expect(existsSync(coverFilePath(first.coverUrl!))).toBe(false);
-    expect(existsSync(coverFilePath(second.coverUrl!))).toBe(true);
+    expect(await isStored(first.coverUrl!)).toBe(false);
+    expect(await isStored(second.coverUrl!)).toBe(true);
+    expect((await request(app).get(new URL(first.coverUrl!).pathname)).status).toBe(404);
+  });
+
+  it("only serves keys the server could have made", async () => {
+    for (const path of ["/uploads/../.env", "/uploads/covers/x.png", "/uploads/other/a.png"]) {
+      expect((await request(app).get(path)).status).toBe(404);
+    }
   });
 
   it("rejects files that aren't really images, whatever their name says", async () => {
@@ -191,19 +197,18 @@ describe("book covers", () => {
       .put(`/books/${book.id}/cover`)
       .set(bearer(alice.accessToken))
       .attach("cover", makePng(2, 2), "cover.png");
-    const file = coverFilePath(withCover.body.coverUrl);
 
     const removed = await request(app)
       .delete(`/books/${book.id}/cover`)
       .set(bearer(alice.accessToken));
     expect(removed.body.coverUrl).toBeNull();
-    expect(existsSync(file)).toBe(false);
+    expect(await isStored(withCover.body.coverUrl)).toBe(false);
 
     const again = await request(app)
       .put(`/books/${book.id}/cover`)
       .set(bearer(alice.accessToken))
       .attach("cover", makePng(2, 2), "cover.png");
     await request(app).delete(`/books/${book.id}`).set(bearer(alice.accessToken)).expect(204);
-    expect(existsSync(coverFilePath(again.body.coverUrl))).toBe(false);
+    expect(await isStored(again.body.coverUrl)).toBe(false);
   });
 });

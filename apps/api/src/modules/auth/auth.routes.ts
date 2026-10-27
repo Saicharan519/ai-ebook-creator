@@ -9,14 +9,13 @@ import { REFRESH_TOKEN_TTL_MS } from "./tokens";
 
 const REFRESH_COOKIE = "refresh_token";
 
-// The frontend and API live on different sites in production (Vercel and Render),
-// which needs SameSite=None. Locally both are on localhost, where Lax works.
-const isProduction = env.NODE_ENV === "production";
+// In production the web app proxies /api to this server, so the cookie is first-party
+// (browsers increasingly block third-party cookies) and lives under /api/auth.
 const refreshCookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
-  path: "/auth",
+  secure: env.NODE_ENV === "production" || env.AUTH_COOKIE_SAMESITE === "none",
+  sameSite: env.AUTH_COOKIE_SAMESITE,
+  path: env.AUTH_COOKIE_PATH,
 };
 
 /**

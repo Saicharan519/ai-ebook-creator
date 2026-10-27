@@ -1,10 +1,11 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { prisma } from "./db";
 import { env } from "./env";
 
 /**
- * Where uploaded files live. Local disk in development; a cloud bucket can
- * implement the same interface for production without touching callers.
+ * Where uploaded files live. Callers only see this interface, so the backend
+ * can change (disk, database, a cloud bucket) without touching them.
  */
 export interface FileStorage {
   save(key: string, data: Buffer): Promise<void>;
@@ -14,6 +15,7 @@ export interface FileStorage {
   publicUrl(key: string): string;
 }
 
+/** Files on the local disk. Simple, but lost on hosts with temporary disks (Render's free tier). */
 export class LocalDiskStorage implements FileStorage {
   constructor(
     readonly rootDir: string,
@@ -53,7 +55,38 @@ export class LocalDiskStorage implements FileStorage {
   }
 }
 
-export const storage = new LocalDiskStorage(
-  path.resolve(env.UPLOAD_DIR),
-  `${env.PUBLIC_API_URL}/uploads`,
-);
+/**
+ * Files in Postgres. Covers are small (2 MB at most), so this avoids a separate
+ * storage service and survives restarts on hosts without a persistent disk.
+ */
+export class DatabaseStorage implements FileStorage {
+  constructor(private readonly publicBaseUrl: string) {}
+
+  async save(key: string, data: Buffer) {
+    await prisma.storedFile.upsert({
+      where: { key },
+      create: { key, data: new Uint8Array(data) },
+      update: { data: new Uint8Array(data) },
+    });
+  }
+
+  async read(key: string) {
+    const file = await prisma.storedFile.findUnique({ where: { key } });
+    return file ? Buffer.from(file.data) : null;
+  }
+
+  async delete(key: string) {
+    await prisma.storedFile.deleteMany({ where: { key } });
+  }
+
+  publicUrl(key: string) {
+    return `${this.publicBaseUrl}/${key}`;
+  }
+}
+
+const publicBaseUrl = `${env.PUBLIC_API_URL}/uploads`;
+
+export const storage: FileStorage =
+  env.STORAGE_DRIVER === "database"
+    ? new DatabaseStorage(publicBaseUrl)
+    : new LocalDiskStorage(path.resolve(env.UPLOAD_DIR), publicBaseUrl);

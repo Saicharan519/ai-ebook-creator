@@ -239,6 +239,15 @@ model ConsistencyWarning {
   @@map("consistency_warnings")
 }
 
+/// An uploaded file (book covers), used when STORAGE_DRIVER=database
+model StoredFile {
+  key       String   @id
+  data      Bytes
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("stored_files")
+}
+
 /// A conflict the author said is fine; never raised again for this book
 model DismissedConflict {
   bookId      String   @map("book_id") @db.Uuid

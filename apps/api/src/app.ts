@@ -5,7 +5,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { env } from "./lib/env";
 import { createLlmProvider, type LlmProvider } from "./lib/llm";
-import { AppError } from "./lib/errors";
+import { AppError, NotFoundError } from "./lib/errors";
 import { requestLogger } from "./lib/request-logger";
 import { storage } from "./lib/storage";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
@@ -21,6 +21,9 @@ import { healthRouter } from "./modules/health/health.routes";
 import { publicRouter } from "./modules/public/public.routes";
 import { createVersionsRouter } from "./modules/versions/versions.routes";
 
+/** Upload keys are made by the server (books.service setCover); nothing else is served */
+const UPLOAD_KEY = /^covers\/[0-9a-f-]{36}\.(png|jpg)$/;
+
 export interface AppOptions {
   /** Overrides AUTH_RATE_LIMIT_MAX; lets tests exercise the limiter quickly. */
   authRateLimitMax?: number;
@@ -34,9 +37,8 @@ export function createApp(options: AppOptions = {}) {
   const app = express();
 
   app.disable("x-powered-by");
-  if (env.NODE_ENV === "production") {
-    // Render puts one proxy in front of the app; needed for real client IPs in rate limiting
-    app.set("trust proxy", 1);
+  if (env.TRUST_PROXY_HOPS > 0) {
+    app.set("trust proxy", env.TRUST_PROXY_HOPS);
   }
 
   app.use(helmet());
@@ -59,16 +61,20 @@ export function createApp(options: AppOptions = {}) {
     }),
   );
 
-  // Uploaded covers are public, with unguessable names. The web app is on another
-  // origin, so relax helmet's same-origin resource policy for these files only.
-  app.use(
-    "/uploads",
-    express.static(storage.rootDir, {
-      immutable: true,
-      maxAge: "365d",
-      setHeaders: (res) => res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"),
-    }),
-  );
+  // Uploaded covers are public, with unguessable names that never change. The web
+  // app may be on another origin, so relax helmet's same-origin resource policy here.
+  app.get("/uploads/*key", async (req, res) => {
+    const key = (req.params as { key: string[] }).key.join("/");
+    const match = UPLOAD_KEY.exec(key);
+    const data = match ? await storage.read(key) : null;
+    if (!match || !data) throw new NotFoundError("File not found");
+    res.set({
+      "Content-Type": match[1] === "png" ? "image/png" : "image/jpeg",
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cross-Origin-Resource-Policy": "cross-origin",
+    });
+    res.send(data);
+  });
 
   app.use("/health", healthRouter);
   app.use(

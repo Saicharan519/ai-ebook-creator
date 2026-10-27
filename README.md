@@ -233,6 +233,16 @@ e2e/                 Playwright tests and the screenshot script
 docs/                PRD, build plan, evaluation report, screenshots
 ```
 
+## Deployment
+
+| Part | Host | How |
+|---|---|---|
+| Database | [Neon](https://neon.tech) (Postgres + pgvector) | Tables are created by `prisma migrate deploy` when the API starts |
+| API | [Render](https://render.com) | [`render.yaml`](render.yaml) Blueprint: builds the API, runs migrations, health-checks `/health` |
+| Web | [Vercel](https://vercel.com) | Root directory `apps/web`; [`vercel.json`](apps/web/vercel.json) serves the SPA and proxies `/api/*` to Render |
+
+The web app talks to the API through its own `/api` path, so the refresh cookie is first-party (browsers increasingly block third-party cookies) and no CORS preflight is needed. Covers are stored in Postgres (`STORAGE_DRIVER=database`) because Render's free tier has no persistent disk.
+
 ## Status and roadmap
 
 v2 is a full rewrite of the original MERN version (still in the `main` branch). The build plan and progress are in [docs/PLAN.md](docs/PLAN.md).
