@@ -36,5 +36,5 @@ Thumbs.db
 .vscode/
 .idea/
 
-# secrets cleanup artifact — safe to delete
-secrets.txt
+# Local copy of the removed v1 code (old .env files and uploads may still sit there)
+legacy/

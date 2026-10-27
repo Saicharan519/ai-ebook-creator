@@ -12,7 +12,7 @@ AI eBook Creator: an AI writing studio for novels, stories, and notes. Its signa
 ## Current state
 
 - `main` holds **v1** (MERN, JavaScript). Only bug fixes go there.
-- **v2** is being built on the `v2` branch. On that branch the v1 code lives in `legacy/` for reference only. Check `docs/PLAN.md` for which phase is in progress before starting work.
+- **v2** is being built on the `v2` branch and replaces v1 entirely (the v1 code was removed from this branch; it's in `main`'s history). Check `docs/PLAN.md` for which phase is in progress before starting work.
 
 ## v2 structure
 
@@ -34,7 +34,6 @@ apps/web/          React 19 + Vite + TypeScript + Tailwind 4
   src/pages/       Route-level components; routes are in src/router.tsx
 packages/shared/   Zod schemas + types shared by api and web (shipped as TS source)
 e2e/               Playwright end-to-end tests of the whole app
-legacy/            v1 code, reference only
 docs/              PRD, plan
 ```
 
@@ -91,4 +90,4 @@ CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, build
 
 - Do not change the database schema without creating a Prisma migration.
 - Do not add a new dependency when an existing one already covers the need.
-- Do not touch the v1 code (`backend/`, `frontend/`) when working on v2.
+- Do not bring back v1 code (`backend/`, `frontend/`); v2 replaces it.

@@ -19,7 +19,7 @@
 <!-- Add a short GIF of the full flow here: create book → AI outline → generate chapter → export PDF -->
 <!-- ![Demo](docs/screenshots/demo.gif) -->
 
-> **This is the `v2` branch: a full rewrite in progress** (TypeScript, PostgreSQL, Story Memory). See [docs/PRD.md](docs/PRD.md) for what is being built and [docs/PLAN.md](docs/PLAN.md) for progress. Apart from **Getting Started**, the sections below still describe v1, whose code now lives in `legacy/`.
+> **This is the `v2` branch: a full rewrite in progress** (TypeScript, PostgreSQL, Story Memory). See [docs/PRD.md](docs/PRD.md) for what is being built and [docs/PLAN.md](docs/PLAN.md) for progress. Apart from **Getting Started**, the sections below still describe v1, whose code is in the `main` branch.
 
 ## About
 
@@ -124,7 +124,6 @@ Open http://localhost:5173. The landing page footer shows whether the API and da
 apps/api/          Express 5 + TypeScript API, Prisma schema and migrations
 apps/web/          React 19 + Vite + TypeScript frontend
 packages/shared/   Zod schemas and types used by both apps
-legacy/            v1 code (MERN), kept for reference until v2 replaces it
 docs/              PRD and build plan
 ```
 

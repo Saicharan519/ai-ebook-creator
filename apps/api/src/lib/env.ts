@@ -31,6 +31,8 @@ const envSchema = z.object({
   // Input + output tokens one user may spend per UTC day
   AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().positive().default(200_000),
   AI_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(20),
+  // All requests from one IP address, per minute
+  GLOBAL_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(300),
 });
 
 export type Env = z.infer<typeof envSchema>;

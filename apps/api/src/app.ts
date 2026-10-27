@@ -2,10 +2,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import { pinoHttp } from "pino-http";
+import { rateLimit } from "express-rate-limit";
 import { env } from "./lib/env";
 import { createLlmProvider, type LlmProvider } from "./lib/llm";
-import { logger } from "./lib/logger";
+import { AppError } from "./lib/errors";
+import { requestLogger } from "./lib/request-logger";
 import { storage } from "./lib/storage";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { requireAuth } from "./middleware/require-auth";
@@ -42,7 +43,21 @@ export function createApp(options: AppOptions = {}) {
   app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
-  app.use(pinoHttp({ logger }));
+  app.use(requestLogger);
+  // A ceiling for any one address, on top of the stricter limits on login, AI, and
+  // the public reader. Generous enough that normal editing (autosave) never hits it.
+  app.use(
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: env.GLOBAL_RATE_LIMIT_PER_MINUTE,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      skip: (req) => req.path === "/health",
+      handler: (_req, _res, next) => {
+        next(new AppError(429, "TOO_MANY_REQUESTS", "Too many requests. Slow down a little."));
+      },
+    }),
+  );
 
   // Uploaded covers are public, with unguessable names. The web app is on another
   // origin, so relax helmet's same-origin resource policy for these files only.
