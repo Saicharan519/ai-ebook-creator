@@ -1,6 +1,0 @@
-.env
-node_modules
-
-# User-uploaded files
-uploads/*
-!uploads/.gitkeep
