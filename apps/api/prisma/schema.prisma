@@ -61,6 +61,9 @@ model Book {
   /// Storage key of the cover image, e.g. "covers/<uuid>.png"
   coverKey     String?    @map("cover_key")
   status       BookStatus @default(draft)
+  /// Public reader address (/read/<slug>); kept after unpublishing so the link stays the same
+  slug         String?    @unique
+  publishedAt  DateTime?  @map("published_at")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 

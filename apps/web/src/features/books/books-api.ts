@@ -80,6 +80,17 @@ export function useDeleteBook() {
   });
 }
 
+export function usePublishBook(bookId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (publish: boolean) =>
+      apiRequest(`/books/${bookId}/publish`, bookSchema, {
+        method: publish ? "POST" : "DELETE",
+      }),
+    onSuccess: (book) => storeBook(queryClient, book),
+  });
+}
+
 export function useUploadCover(bookId: string) {
   const queryClient = useQueryClient();
   return useMutation({

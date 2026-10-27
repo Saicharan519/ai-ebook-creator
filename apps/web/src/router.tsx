@@ -5,10 +5,13 @@ import { EditorPage } from "./pages/EditorPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { ReaderPage } from "./pages/ReaderPage";
 import { SignupPage } from "./pages/SignupPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
+  // Public: anyone with the link can read a published book
+  { path: "/read/:slug/:chapterId?", element: <ReaderPage /> },
   {
     element: <RedirectIfAuthenticated />,
     children: [

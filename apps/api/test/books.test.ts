@@ -97,7 +97,7 @@ describe("books", () => {
     expect(res.status).toBe(404);
   });
 
-  it("updates allowed fields and ignores attempts to change the owner or cover", async () => {
+  it("updates allowed fields and ignores attempts to change the owner, cover, or status", async () => {
     const book = await createBook(alice);
 
     const res = await request(app)
@@ -106,7 +106,7 @@ describe("books", () => {
       .send({ title: "Renamed", status: "published", ownerId: bob.user.id, coverKey: "../.env" });
 
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ title: "Renamed", status: "published", coverUrl: null });
+    expect(res.body).toMatchObject({ title: "Renamed", status: "draft", coverUrl: null });
     const row = await prisma.book.findUniqueOrThrow({ where: { id: book.id } });
     expect(row.ownerId).toBe(alice.user.id);
     expect(row.coverKey).toBeNull();

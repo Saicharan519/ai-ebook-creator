@@ -16,7 +16,14 @@ export function BookCard({
       <Link to={`/books/${book.id}`} className="flex flex-1 flex-col gap-3">
         <BookCover book={book} />
         <div className="min-w-0">
-          <h3 className="truncate font-semibold text-stone-900">{book.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="truncate font-semibold text-stone-900">{book.title}</h3>
+            {book.status === "published" && (
+              <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                Published
+              </span>
+            )}
+          </div>
           {book.genre && <p className="truncate text-sm text-stone-500">{book.genre}</p>}
           <p className="mt-1 text-xs text-stone-500">
             {pluralize(book.chapterCount, "chapter")} · {pluralize(book.wordCount, "word")}

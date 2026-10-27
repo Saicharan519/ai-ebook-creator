@@ -1,5 +1,5 @@
 import type { ChapterSummary } from "@ebook/shared";
-import { ArrowLeft, BookMarked, History, PanelLeft, Settings2 } from "lucide-react";
+import { ArrowLeft, BookMarked, Globe, History, PanelLeft, Settings2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { AppHeader } from "../components/layout/AppHeader";
@@ -8,6 +8,7 @@ import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Spinner } from "../components/ui/Spinner";
 import { OutlineDialog } from "../features/ai/OutlineDialog";
 import { BookDetailsDialog } from "../features/books/BookDetailsDialog";
+import { PublishDialog } from "../features/books/PublishDialog";
 import {
   useBook,
   useChapter,
@@ -40,6 +41,7 @@ export function EditorPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
   const [aside, setAside] = useState<"bible" | "history" | null>(null);
   /** Bumped when the text is replaced (restore, keep), so the editor reloads it */
   const [revision, setRevision] = useState(0);
@@ -181,6 +183,17 @@ export function EditorPage() {
             <span className="hidden lg:inline">Story Bible</span>
           </Button>
           <ExportButtons bookId={bookId} title={book.data.title} beforeExport={flushPending} />
+          <Button
+            variant={book.data.status === "published" ? "secondary" : "primary"}
+            size="sm"
+            aria-label={book.data.status === "published" ? "Published" : "Publish"}
+            onClick={() => setPublishOpen(true)}
+          >
+            <Globe className="h-4 w-4" />
+            <span className="hidden lg:inline">
+              {book.data.status === "published" ? "Published" : "Publish"}
+            </span>
+          </Button>
         </div>
       </AppHeader>
 
@@ -274,6 +287,13 @@ export function EditorPage() {
         open={planOpen}
         onClose={() => setPlanOpen(false)}
         onAdded={selectChapter}
+      />
+
+      <PublishDialog
+        book={book.data}
+        open={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        flushPending={flushPending}
       />
 
       <BookDetailsDialog

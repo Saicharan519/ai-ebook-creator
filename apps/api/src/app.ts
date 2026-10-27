@@ -17,6 +17,7 @@ import { exportRouter } from "./modules/export/export.routes";
 import { noopMemoryQueue, type MemoryQueue } from "./modules/memory/memory-queue";
 import { createStoryBibleRouter } from "./modules/memory/story-bible.routes";
 import { healthRouter } from "./modules/health/health.routes";
+import { publicRouter } from "./modules/public/public.routes";
 import { createVersionsRouter } from "./modules/versions/versions.routes";
 
 export interface AppOptions {
@@ -72,6 +73,8 @@ export function createApp(options: AppOptions = {}) {
     createStoryBibleRouter(memoryQueue, llm !== null),
   );
   app.use("/ai", requireAuth, aiUsageRouter);
+  // No login: published books only
+  app.use("/public", publicRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

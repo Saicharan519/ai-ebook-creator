@@ -17,9 +17,8 @@ export const createBookInputSchema = z.object({
   writingStyle: z.string().trim().max(500).optional(),
 });
 
-export const updateBookInputSchema = createBookInputSchema
-  .partial()
-  .extend({ status: bookStatusSchema.optional() });
+// Publishing has its own endpoints, so `status` can't be changed here
+export const updateBookInputSchema = createBookInputSchema.partial();
 
 export const createChapterInputSchema = z.object({
   title: title.optional(),
@@ -71,6 +70,9 @@ export const bookSummarySchema = z.object({
 export const bookSchema = bookSummarySchema.extend({
   premise: z.string(),
   writingStyle: z.string(),
+  /** Public reader address, set the first time the book is published */
+  slug: z.string().nullable(),
+  publishedAt: z.iso.datetime().nullable(),
   chapters: z.array(chapterSummarySchema),
 });
 

@@ -1,8 +1,13 @@
 import type { Book, BookSummary, CreateBookInput, UpdateBookInput } from "@ebook/shared";
-import type { Book as BookRow, Chapter as ChapterRow } from "../../generated/prisma/client";
+import {
+  Prisma,
+  type Book as BookRow,
+  type Chapter as ChapterRow,
+} from "../../generated/prisma/client";
 import { prisma } from "../../lib/db";
 import { AppError, NotFoundError } from "../../lib/errors";
 import { detectImageType } from "../../lib/image-type";
+import { bookSlug } from "../../lib/slug";
 import { storage } from "../../lib/storage";
 import { toChapterSummaryDto } from "../chapters/chapters.dto";
 
@@ -29,6 +34,8 @@ function toBookDto(book: BookRow & { chapters: ChapterRow[] }): Book {
     ...toBookSummaryDto(book, book.chapters),
     premise: book.premise,
     writingStyle: book.writingStyle,
+    slug: book.slug,
+    publishedAt: book.publishedAt?.toISOString() ?? null,
     chapters: book.chapters.map(toChapterSummaryDto),
   };
 }
@@ -85,6 +92,50 @@ export async function updateBook(
 ): Promise<Book> {
   await findOwnedBook(userId, bookId);
   await prisma.book.update({ where: { id: bookId }, data: input });
+  return getBook(userId, bookId);
+}
+
+const SLUG_ATTEMPTS = 3;
+
+/**
+ * Makes the book readable at /read/<slug>. The slug is created on first
+ * publish and kept afterwards, so republishing restores the same link.
+ */
+export async function publishBook(userId: string, bookId: string): Promise<Book> {
+  const book = await findOwnedBook(userId, bookId);
+
+  const written = await prisma.chapter.count({ where: { bookId, wordCount: { gt: 0 } } });
+  if (written === 0) {
+    throw new AppError(400, "NOTHING_TO_PUBLISH", "Write at least one chapter before publishing");
+  }
+
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await prisma.book.update({
+        where: { id: bookId },
+        data: {
+          status: "published",
+          slug: book.slug ?? bookSlug(book.title),
+          publishedAt: book.publishedAt ?? new Date(),
+        },
+      });
+      break;
+    } catch (error) {
+      // A random suffix colliding is very unlikely, but cheap to handle
+      const collided =
+        error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+      if (!collided || book.slug || attempt === SLUG_ATTEMPTS) throw error;
+    }
+  }
+  return getBook(userId, bookId);
+}
+
+export async function unpublishBook(userId: string, bookId: string): Promise<Book> {
+  await findOwnedBook(userId, bookId);
+  await prisma.book.update({
+    where: { id: bookId },
+    data: { status: "draft", publishedAt: null },
+  });
   return getBook(userId, bookId);
 }
 

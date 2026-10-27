@@ -37,6 +37,16 @@ booksRouter.patch("/:bookId", async (req, res) => {
   res.json(await booksService.updateBook(currentUserId(req), bookId, input));
 });
 
+booksRouter.post("/:bookId/publish", async (req, res) => {
+  const bookId = idParam(req.params.bookId, "Book");
+  res.json(await booksService.publishBook(currentUserId(req), bookId));
+});
+
+booksRouter.delete("/:bookId/publish", async (req, res) => {
+  const bookId = idParam(req.params.bookId, "Book");
+  res.json(await booksService.unpublishBook(currentUserId(req), bookId));
+});
+
 booksRouter.delete("/:bookId", async (req, res) => {
   const bookId = idParam(req.params.bookId, "Book");
   await booksService.deleteBook(currentUserId(req), bookId);
