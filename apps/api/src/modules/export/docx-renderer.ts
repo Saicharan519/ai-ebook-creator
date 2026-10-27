@@ -1,15 +1,17 @@
 import {
   AlignmentType,
+  Bookmark,
   BorderStyle,
   Document,
   HeadingLevel,
   ImageRun,
+  InternalHyperlink,
   Packer,
   Paragraph,
   TextRun,
 } from "docx";
 import { imageSize } from "../../lib/image-type";
-import type { ExportBook } from "./export-book";
+import { chapterHeading, type ExportBook } from "./export-book";
 import { parseMarkdown, type Block, type Inline } from "./markdown-blocks";
 
 const FONTS = { body: "Georgia", heading: "Calibri", code: "Courier New" };
@@ -29,7 +31,8 @@ const HEADING_LEVELS = [
 ] as const;
 
 export async function renderDocx(book: ExportBook): Promise<Buffer> {
-  const children: Paragraph[] = [...coverPage(book), ...titlePage(book)];
+  const headings = book.chapters.map(chapterHeading);
+  const children: Paragraph[] = [...coverPage(book), ...titlePage(book), ...contentsPage(headings)];
 
   book.chapters.forEach((chapter, index) => {
     children.push(
@@ -38,12 +41,17 @@ export async function renderDocx(book: ExportBook): Promise<Buffer> {
         pageBreakBefore: true,
         spacing: { before: 400, after: 300 },
         children: [
-          new TextRun({
-            text: chapter.title || `Chapter ${index + 1}`,
-            bold: true,
-            font: FONTS.heading,
-            size: SIZE.chapter,
-            color: COLORS.heading,
+          new Bookmark({
+            id: bookmarkId(index),
+            children: [
+              new TextRun({
+                text: headings[index]!,
+                bold: true,
+                font: FONTS.heading,
+                size: SIZE.chapter,
+                color: COLORS.heading,
+              }),
+            ],
           }),
         ],
       }),
@@ -104,6 +112,42 @@ function titlePage(book: ExportBook): Paragraph[] {
     line(book.title, SIZE.title, COLORS.heading, true),
     ...(book.subtitle ? [line(book.subtitle, SIZE.subtitle, COLORS.muted)] : []),
     line(`by ${book.author}`, SIZE.author, COLORS.muted),
+  ];
+}
+
+const bookmarkId = (index: number) => `chapter_${index + 1}`;
+
+/**
+ * Chapter titles linking to each chapter. Word's own TOC field would add page
+ * numbers, but it stays empty until the reader agrees to "update fields".
+ */
+function contentsPage(headings: string[]): Paragraph[] {
+  return [
+    new Paragraph({
+      pageBreakBefore: true,
+      spacing: { after: 300 },
+      children: [
+        new TextRun({
+          text: "Contents",
+          bold: true,
+          font: FONTS.heading,
+          size: SIZE.chapter,
+          color: COLORS.heading,
+        }),
+      ],
+    }),
+    ...headings.map(
+      (heading, index) =>
+        new Paragraph({
+          spacing: { after: 120 },
+          children: [
+            new InternalHyperlink({
+              anchor: bookmarkId(index),
+              children: [new TextRun({ text: heading, style: "Hyperlink" })],
+            }),
+          ],
+        }),
+    ),
   ];
 }
 

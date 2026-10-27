@@ -6,6 +6,7 @@ import { idParam } from "../../lib/params";
 import { storage } from "../../lib/storage";
 import { currentUserId } from "../../middleware/require-auth";
 import { renderDocx } from "./docx-renderer";
+import { renderEpub } from "./epub-renderer";
 import type { ExportBook } from "./export-book";
 import { renderPdf } from "./pdf-renderer";
 
@@ -15,7 +16,11 @@ const FORMATS = {
     render: renderDocx,
     contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   },
+  epub: { render: renderEpub, contentType: "application/epub+zip" },
 } as const;
+
+type Format = keyof typeof FORMATS;
+const isFormat = (value: string): value is Format => Object.hasOwn(FORMATS, value);
 
 async function loadExportBook(userId: string, bookId: string): Promise<ExportBook> {
   const book = await prisma.book.findFirst({
@@ -31,9 +36,11 @@ async function loadExportBook(userId: string, bookId: string): Promise<ExportBoo
   const coverType = coverData ? detectImageType(coverData) : null;
 
   return {
+    id: book.id,
     title: book.title,
     subtitle: book.subtitle,
     author: book.author,
+    updatedAt: book.updatedAt,
     cover: coverData && coverType ? { data: coverData, type: coverType } : null,
     chapters: book.chapters.map(({ title, content }) => ({ title, content })),
   };
@@ -45,7 +52,7 @@ export const exportRouter = Router();
 exportRouter.get("/:bookId/export/:format", async (req, res) => {
   const bookId = idParam(req.params.bookId, "Book");
   const format = req.params.format;
-  if (format !== "pdf" && format !== "docx") {
+  if (!isFormat(format)) {
     throw new NotFoundError("Export format not supported");
   }
 
