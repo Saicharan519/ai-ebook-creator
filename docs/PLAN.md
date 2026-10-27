@@ -95,20 +95,20 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 
 ---
 
-## Phase 4: Versions, branches, and publishing (1 week)
+## Phase 4: Versions, branches, and publishing (1 week) ✅ Done
 
-- [ ] `ChapterVersion` snapshots (manual save, before accepting AI changes, every 10 minutes during autosave)
-- [ ] History panel: list versions, view the diff, restore
-- [ ] What-if branches: create, switch, keep a branch
-- [ ] EPUB export + table of contents in all export formats
-- [ ] Public reader: `slug`, publish/unpublish, a read-only page that needs no login
+- [x] `ChapterVersion` snapshots (manual save or Ctrl+S, before accepting AI changes, before a restore or kept branch, at most every 10 minutes during autosave; old autosaves pruned)
+- [x] History panel: list versions, view a word diff against the current text, restore (the current text is saved first)
+- [x] What-if branches: create (from the main text or any version), switch, keep (replaces the main text; its history moves over) or discard. Story Memory only reads the main text.
+- [x] EPUB export + table of contents in all export formats (PDF: page numbers, links, sidebar outline; Word: linked contents page)
+- [x] Public reader: `slug`, publish/unpublish, a read-only page that needs no login
 
 ---
 
 ## Phase 5: Ship (3–4 days)
 
 - [ ] Playwright end-to-end test: signup → create book → AI outline → write → export
-- [ ] Deploy: Neon (Postgres + pgvector), Render (API), Vercel (web); move covers to Cloudinary
+- [ ] Deploy: Neon (Postgres + pgvector), Render (API), Vercel (web, with an SPA rewrite so `/read/*` links load); move covers to Cloudinary
 - [ ] README: demo GIF, architecture diagram, Story Memory explanation, eval results, live link
 - [ ] Delete `legacy/` and merge `v2` into `main`
 

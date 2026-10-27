@@ -18,11 +18,13 @@ AI eBook Creator: an AI writing studio for novels, stories, and notes. Its signa
 
 ```
 apps/api/          Express 5 + TypeScript REST API
-  src/modules/     One folder per feature: health, auth, books, chapters, ai, memory, export
+  src/modules/     One folder per feature: health, auth, books, chapters, versions, ai, memory,
+                   export, public (the no-login reader API)
                    Each has: *.routes.ts, *.controller.ts, *.service.ts as needed
   src/lib/         env (Zod-validated), db (Prisma), logger (pino), errors (AppError)
   src/middleware/  error handler, requireAuth
-                   Book routes (books, chapters, export) are mounted together at /books behind requireAuth
+                   Book routes (books, chapters, versions, export, ai, story bible) are mounted
+                   together at /books behind requireAuth; /public is the only unauthenticated data route
   src/generated/   Prisma client (generated, gitignored; never edit)
   prisma/          schema.prisma + migrations (config in prisma.config.ts, Prisma 7)
   test/            API tests (Vitest + Supertest) against a real test database
@@ -45,6 +47,9 @@ npm test                      # all tests; API tests use the ebook_test database
 npm run lint && npm run typecheck && npm run format:check
 npm run build
 npm run db:migrate -- --name x # create + apply a migration, then regenerate the client
+# If migrate dev refuses to run non-interactively (e.g. it wants to confirm a new unique index):
+#   npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script
+#   > prisma/migrations/<timestamp>_<name>/migration.sql, then npx prisma migrate deploy
 ```
 
 CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, and build on every push.
