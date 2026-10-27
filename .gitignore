@@ -20,6 +20,10 @@ apps/api/uploads/*
 apps/api/.test-uploads/
 !apps/api/uploads/.gitkeep
 
+# Playwright output
+e2e/test-results/
+e2e/playwright-report/
+
 # Logs
 *.log
 npm-debug.log*

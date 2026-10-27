@@ -33,6 +33,7 @@ apps/web/          React 19 + Vite + TypeScript + Tailwind 4
   src/lib/         API client (apiRequest), query client
   src/pages/       Route-level components; routes are in src/router.tsx
 packages/shared/   Zod schemas + types shared by api and web (shipped as TS source)
+e2e/               Playwright end-to-end tests of the whole app
 legacy/            v1 code, reference only
 docs/              PRD, plan
 ```
@@ -44,6 +45,8 @@ docker compose up -d          # Postgres 17 + pgvector on localhost:5433 (5432 i
 npm install                   # all workspaces; postinstall runs prisma generate
 npm run dev                   # api (:8000) + web (:5173) in watch mode
 npm test                      # all tests; API tests use the ebook_test database (apps/api/.env.test)
+npm run test:e2e              # Playwright: starts api (:8100) + web (:5180) with the fake AI on ebook_test
+                              # (first time: npx playwright install chromium). Don't run alongside npm test.
 npm run lint && npm run typecheck && npm run format:check
 npm run build
 npm run db:migrate -- --name x # create + apply a migration, then regenerate the client
@@ -52,7 +55,7 @@ npm run db:migrate -- --name x # create + apply a migration, then regenerate the
 #   > prisma/migrations/<timestamp>_<name>/migration.sql, then npx prisma migrate deploy
 ```
 
-CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, and build on every push.
+CI (`.github/workflows/ci.yml`) runs format check, lint, typecheck, tests, build, and the end-to-end tests on every push.
 
 ## Conventions
 

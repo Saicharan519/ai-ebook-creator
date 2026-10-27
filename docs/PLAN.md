@@ -107,7 +107,7 @@ Rough time: **5–7 weeks** at about 3–4 hours a day.
 
 ## Phase 5: Ship (3–4 days)
 
-- [ ] Playwright end-to-end test: signup → create book → AI outline → write → export
+- [x] Playwright end-to-end test: signup → create book → AI outline → write (with an AI suggestion) → History → export PDF + EPUB → publish → read logged out; runs in CI
 - [ ] Deploy: Neon (Postgres + pgvector), Render (API), Vercel (web, with an SPA rewrite so `/read/*` links load); move covers to Cloudinary
 - [ ] README: demo GIF, architecture diagram, Story Memory explanation, eval results, live link
 - [ ] Delete `legacy/` and merge `v2` into `main`
