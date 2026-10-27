@@ -17,11 +17,15 @@ export interface StreamResult {
  *
  * Headers are only sent once the first event arrives. Until then a failure
  * (bad API key, provider outage) can still become a normal JSON error response.
+ *
+ * `beforeEnd` runs after the last event but before the response closes, so work
+ * such as recording token usage is finished by the time the client sees the end.
  */
 export async function streamToClient(
   res: Response,
   events: AsyncIterable<LlmStreamEvent>,
   signal: AbortSignal,
+  beforeEnd: (result: StreamResult) => Promise<void> = async () => {},
 ): Promise<StreamResult> {
   const iterator = events[Symbol.asyncIterator]();
   let next = await iterator.next();
@@ -64,6 +68,11 @@ export async function streamToClient(
       send("error", { code: appError.code, message: appError.message });
     }
   } finally {
+    try {
+      await beforeEnd({ usage, outputChars });
+    } catch (error) {
+      logger.error({ err: error }, "Work after an AI stream failed");
+    }
     res.end();
   }
 

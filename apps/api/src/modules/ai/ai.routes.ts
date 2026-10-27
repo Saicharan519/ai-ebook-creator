@@ -140,12 +140,15 @@ export function createAiRouter(llm: LlmProvider | null) {
       if (!res.writableFinished) controller.abort();
     });
 
-    const result = await streamToClient(
+    // Usage is recorded before the response ends, so a request sent right after
+    // this one is checked against an up-to-date daily quota
+    await streamToClient(
       res,
       model.stream({ ...request, signal: controller.signal }),
       controller.signal,
+      (result) =>
+        recordUsage(userId, kind, result.usage ?? estimateUsage(request, result.outputChars)),
     );
-    await recordUsage(userId, kind, result.usage ?? estimateUsage(request, result.outputChars));
   }
 
   return router;
