@@ -51,7 +51,7 @@ export function StoryBiblePanel({ bookId, onOpenChapter, onClose }: StoryBiblePa
   return (
     <section aria-label="Story Bible" className="flex h-full flex-col">
       <header className="flex items-center gap-2 border-b border-stone-200 px-4 py-3">
-        <BookMarked className="h-4 w-4 text-accent-600" />
+        <BookMarked className="h-4 w-4 text-violet-600" />
         <h2 className="flex-1 text-sm font-semibold text-stone-900">Story Bible</h2>
         <Button
           variant="ghost"
@@ -70,7 +70,7 @@ export function StoryBiblePanel({ bookId, onOpenChapter, onClose }: StoryBiblePa
 
       {bible.isPending ? (
         <div className="flex justify-center py-12">
-          <Spinner className="h-5 w-5 text-accent-600" />
+          <Spinner className="h-5 w-5 text-violet-600" />
         </div>
       ) : bible.isError ? (
         <p role="alert" className="m-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -110,7 +110,7 @@ export function StoryBiblePanel({ bookId, onOpenChapter, onClose }: StoryBiblePa
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search"
-                className="w-full rounded-md border border-stone-300 py-1.5 pr-2 pl-8 text-sm focus:border-accent-500 focus:outline-none"
+                className="w-full rounded-md border border-stone-300 py-1.5 pr-2 pl-8 text-sm focus:border-violet-500 focus:outline-none"
               />
             </label>
             <Button variant="secondary" size="sm" onClick={() => setAdding(!adding)}>
@@ -203,7 +203,7 @@ function WarningCard({
               <button
                 type="button"
                 onClick={() => onOpenChapter(side.chapter!.id)}
-                className="text-xs text-accent-700 hover:underline"
+                className="text-xs text-violet-700 hover:underline"
               >
                 {chapterLabel(side.chapter)}
               </button>
@@ -248,12 +248,12 @@ function AddEntryForm({ bookId, onDone }: { bookId: string; onDone: () => void }
   }
 
   const field =
-    "w-full rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-accent-500 focus:outline-none";
+    "w-full rounded-md border border-stone-300 px-2 py-1.5 text-sm focus:border-violet-500 focus:outline-none";
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-2 rounded-lg border border-accent-200 bg-accent-50/50 p-3"
+      className="space-y-2 rounded-lg border border-violet-200 bg-violet-50/50 p-3"
     >
       <div className="flex gap-2">
         <select name="kind" aria-label="Kind" className={`${field} w-auto`}>

@@ -13,7 +13,7 @@ interface EntityCardProps {
 }
 
 const inputClass =
-  "w-full rounded-md border border-stone-300 px-2 py-1 text-sm focus:border-accent-500 focus:outline-none";
+  "w-full rounded-md border border-stone-300 px-2 py-1 text-sm focus:border-violet-500 focus:outline-none";
 
 export function EntityCard({ bookId, entity, onOpenChapter }: EntityCardProps) {
   const [open, setOpen] = useState(false);
@@ -80,7 +80,7 @@ export function EntityCard({ bookId, entity, onOpenChapter }: EntityCardProps) {
           }
           className={cn(
             "rounded p-1",
-            entity.pinned ? "text-accent-600" : "text-stone-300 hover:text-stone-500",
+            entity.pinned ? "text-violet-600" : "text-stone-300 hover:text-stone-500",
           )}
         >
           {entity.pinned ? <Pin className="h-3.5 w-3.5" /> : <PinOff className="h-3.5 w-3.5" />}
@@ -177,7 +177,7 @@ export function EntityCard({ bookId, entity, onOpenChapter }: EntityCardProps) {
               <button
                 type="button"
                 onClick={() => setAddingFact(true)}
-                className="mt-1 flex items-center gap-1 text-xs text-accent-700 hover:underline"
+                className="mt-1 flex items-center gap-1 text-xs text-violet-700 hover:underline"
               >
                 <Plus className="h-3 w-3" /> Add a detail
               </button>
@@ -195,7 +195,7 @@ export function EntityCard({ bookId, entity, onOpenChapter }: EntityCardProps) {
                     <button
                       type="button"
                       onClick={() => onOpenChapter(appearance.id)}
-                      className="text-left text-xs text-accent-700 hover:underline"
+                      className="text-left text-xs text-violet-700 hover:underline"
                     >
                       Ch. {appearance.position + 1}: {appearance.title}
                     </button>

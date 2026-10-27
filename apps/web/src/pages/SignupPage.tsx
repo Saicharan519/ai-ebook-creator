@@ -46,7 +46,7 @@ export function SignupPage() {
       subtitle={
         <>
           Already have one?{" "}
-          <Link to="/login" className="font-medium text-accent-600 hover:underline">
+          <Link to="/login" className="font-medium text-violet-600 hover:underline">
             Log in
           </Link>
         </>

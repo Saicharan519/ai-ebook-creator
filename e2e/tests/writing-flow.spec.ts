@@ -64,8 +64,7 @@ test("a writer can go from sign-up to a published, exported book", async ({ page
       ["EPUB", "PK"],
     ] as const) {
       const downloadPromise = page.waitForEvent("download");
-      await page.getByRole("button", { name: "Export" }).click();
-      await page.getByRole("button", { name: new RegExp(`^${label}`) }).click();
+      await page.getByRole("button", { name: label, exact: true }).click();
       const download = await downloadPromise;
       expect(download.suggestedFilename()).toBe(`The Salt Road.${label.toLowerCase()}`);
       const file = await readFile((await download.path())!);

@@ -66,7 +66,7 @@ export function HistoryPanel({
   return (
     <section aria-label="Version history" className="flex h-full flex-col">
       <header className="flex items-center gap-2 border-b border-stone-200 px-4 py-3">
-        <History className="h-4 w-4 text-accent-600" />
+        <History className="h-4 w-4 text-violet-600" />
         <h2 className="flex-1 text-sm font-semibold text-stone-900">
           History
           <span className="ml-1 font-normal text-stone-500">
@@ -89,7 +89,7 @@ export function HistoryPanel({
             onChange={(e) => setLabel(e.target.value)}
             maxLength={120}
             placeholder="Label (optional)"
-            className="min-w-0 flex-1 rounded-md border border-stone-300 px-2 py-1 text-sm focus:border-accent-500 focus:outline-none"
+            className="min-w-0 flex-1 rounded-md border border-stone-300 px-2 py-1 text-sm focus:border-violet-500 focus:outline-none"
           />
           <Button type="submit" size="sm" loading={saveVersion.isPending}>
             {!saveVersion.isPending && <Save className="h-4 w-4" />}
@@ -109,7 +109,7 @@ export function HistoryPanel({
       <div className="min-h-0 flex-1 overflow-y-auto">
         {versions.isPending ? (
           <div className="flex justify-center py-10">
-            <Spinner className="h-5 w-5 text-accent-600" />
+            <Spinner className="h-5 w-5 text-violet-600" />
           </div>
         ) : versions.isError ? (
           <p role="alert" className="m-4 text-sm text-red-600">
@@ -179,7 +179,7 @@ function VersionItem({
         aria-controls={detailsId}
         className={cn(
           "w-full px-4 py-3 text-left hover:bg-stone-100",
-          expanded && "bg-accent-50 hover:bg-accent-50",
+          expanded && "bg-violet-50 hover:bg-violet-50",
         )}
       >
         <span className="block text-sm font-medium text-stone-900">
@@ -259,9 +259,9 @@ function VersionDetails({
   const error = restore.error ?? createBranch.error;
 
   return (
-    <div id={id} className="space-y-3 bg-accent-50/50 px-4 pt-1 pb-4">
+    <div id={id} className="space-y-3 bg-violet-50/50 px-4 pt-1 pb-4">
       {version.isPending ? (
-        <Spinner className="h-4 w-4 text-accent-600" />
+        <Spinner className="h-4 w-4 text-violet-600" />
       ) : version.isError ? (
         <p role="alert" className="text-xs text-red-600">
           {errorMessage(version.error)}

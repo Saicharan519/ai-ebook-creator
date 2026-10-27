@@ -47,10 +47,10 @@ export function SuggestionPanel({
     <section
       aria-label="AI suggestion"
       aria-busy={streaming}
-      className="sticky bottom-4 z-[5] mt-6 rounded-xl border border-accent-200 bg-white shadow-lg"
+      className="sticky bottom-4 z-[5] mt-6 rounded-xl border border-violet-200 bg-white shadow-lg"
     >
-      <header className="flex items-center gap-2 border-b border-accent-100 px-4 py-2.5">
-        <Sparkles className="h-4 w-4 text-accent-600" />
+      <header className="flex items-center gap-2 border-b border-violet-100 px-4 py-2.5">
+        <Sparkles className="h-4 w-4 text-violet-600" />
         <h3 className="text-sm font-medium text-stone-900">{title}</h3>
         <span className="text-xs text-stone-500" role="status">
           {streaming
@@ -78,7 +78,7 @@ export function SuggestionPanel({
         )}
       </div>
 
-      <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-accent-100 px-4 py-2.5">
+      <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-violet-100 px-4 py-2.5">
         {streaming ? (
           <Button variant="secondary" size="sm" onClick={onStop}>
             <Square className="h-3.5 w-3.5" /> Stop

@@ -96,7 +96,7 @@ export function EditorPage() {
   if (book.isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="h-6 w-6 text-accent-600" />
+        <Spinner className="h-6 w-6 text-violet-600" />
       </div>
     );
   }
@@ -104,14 +104,14 @@ export function EditorPage() {
   if (book.isError) {
     const notFound = book.error instanceof ApiRequestError && book.error.status === 404;
     return (
-      <div className="min-h-screen bg-paper">
+      <div className="min-h-screen bg-stone-50">
         <AppHeader />
         <main className="mx-auto max-w-md px-4 py-20 text-center">
           <h1 className="text-xl font-semibold text-stone-900">
             {notFound ? "Book not found" : "Couldn't load this book"}
           </h1>
           {!notFound && <p className="mt-2 text-stone-600">{errorMessage(book.error)}</p>}
-          <Link to="/books" className="mt-6 inline-block text-accent-600 hover:underline">
+          <Link to="/books" className="mt-6 inline-block text-violet-600 hover:underline">
             Back to your books
           </Link>
         </main>
@@ -156,9 +156,7 @@ export function EditorPage() {
           className="flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 hover:bg-stone-100"
           title="Edit book details"
         >
-          <span className="truncate font-serif text-[1.05rem] font-medium text-stone-900">
-            {book.data.title}
-          </span>
+          <span className="truncate font-medium text-stone-900">{book.data.title}</span>
           <Settings2 className="h-4 w-4 shrink-0 text-stone-400" />
         </button>
         <SaveStatusBadge status={saveStatus} />
@@ -171,7 +169,7 @@ export function EditorPage() {
             disabled={!selectedId}
             onClick={() => toggleAside("history")}
           >
-            <History className="h-4 w-4 text-accent-600" />
+            <History className="h-4 w-4 text-violet-600" />
             <span className="hidden lg:inline">History</span>
           </Button>
           <Button
@@ -181,7 +179,7 @@ export function EditorPage() {
             aria-label="Story Bible"
             onClick={() => toggleAside("bible")}
           >
-            <BookMarked className="h-4 w-4 text-accent-600" />
+            <BookMarked className="h-4 w-4 text-violet-600" />
             <span className="hidden lg:inline">Story Bible</span>
           </Button>
           <ExportButtons bookId={bookId} title={book.data.title} beforeExport={flushPending} />
@@ -202,7 +200,7 @@ export function EditorPage() {
       <div className="relative flex min-h-0 flex-1">
         <aside
           className={cn(
-            "w-72 shrink-0 border-r border-stone-200 bg-paper",
+            "w-72 shrink-0 border-r border-stone-200 bg-stone-50",
             "absolute inset-y-0 left-0 z-20 shadow-lg transition-transform md:static md:translate-x-0 md:shadow-none",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
@@ -222,7 +220,7 @@ export function EditorPage() {
         <main className="min-w-0 flex-1 overflow-y-auto">
           {(chapter.isPending && selectedId) || (activeBranch && branch.isPending) ? (
             <div className="flex justify-center py-20">
-              <Spinner className="h-6 w-6 text-accent-600" />
+              <Spinner className="h-6 w-6 text-violet-600" />
             </div>
           ) : chapter.isError ? (
             <p role="alert" className="m-8 rounded-lg bg-red-50 px-4 py-3 text-red-700">
@@ -260,7 +258,7 @@ export function EditorPage() {
         </main>
 
         {aside && (
-          <aside className="absolute inset-y-0 right-0 z-20 w-80 border-l border-stone-200 bg-paper shadow-lg xl:static xl:shadow-none">
+          <aside className="absolute inset-y-0 right-0 z-20 w-80 border-l border-stone-200 bg-stone-50 shadow-lg xl:static xl:shadow-none">
             {aside === "bible" ? (
               <StoryBiblePanel
                 bookId={bookId}

@@ -45,7 +45,7 @@ export function LoginPage() {
       subtitle={
         <>
           New here?{" "}
-          <Link to="/signup" className="font-medium text-accent-600 hover:underline">
+          <Link to="/signup" className="font-medium text-violet-600 hover:underline">
             Create an account
           </Link>
         </>
