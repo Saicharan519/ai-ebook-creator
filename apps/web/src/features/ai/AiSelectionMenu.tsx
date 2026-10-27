@@ -25,14 +25,14 @@ export function AiSelectionMenu({
         aria-label="AI actions for the selected text"
         className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-white p-1 text-sm shadow-lg"
       >
-        <Sparkles className="mx-1 h-4 w-4 text-violet-600" aria-hidden="true" />
+        <Sparkles className="mx-1 h-4 w-4 text-accent-600" aria-hidden="true" />
         {ACTIONS.map((action) => (
           <button
             key={action}
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onAction(action)}
-            className="rounded-md px-2 py-1 whitespace-nowrap text-stone-700 hover:bg-violet-50 hover:text-violet-800"
+            className="rounded-md px-2 py-1 whitespace-nowrap text-stone-700 hover:bg-accent-50 hover:text-accent-800"
           >
             {INLINE_ACTION_LABELS[action]}
           </button>
@@ -41,7 +41,7 @@ export function AiSelectionMenu({
           aria-label="Change tone"
           value=""
           onChange={(event) => onAction("tone", event.target.value)}
-          className="rounded-md bg-transparent px-1 py-1 text-stone-700 hover:bg-violet-50"
+          className="rounded-md bg-transparent px-1 py-1 text-stone-700 hover:bg-accent-50"
         >
           <option value="" disabled>
             Tone…

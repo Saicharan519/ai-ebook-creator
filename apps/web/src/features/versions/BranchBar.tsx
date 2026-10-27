@@ -83,7 +83,7 @@ export function BranchBar({
     branches.length === 0 ? (
       <div className="mx-auto flex max-w-3xl justify-end px-4 pt-3 sm:px-8">
         <Button variant="ghost" size="sm" onClick={() => setCreating(true)}>
-          <GitBranch className="h-4 w-4 text-violet-600" />
+          <GitBranch className="h-4 w-4 text-accent-600" />
           Try a what-if
         </Button>
       </div>
@@ -92,11 +92,11 @@ export function BranchBar({
         className={
           activeBranch
             ? "border-b border-amber-200 bg-amber-50"
-            : "border-b border-stone-200 bg-stone-50"
+            : "border-b border-stone-200 bg-paper"
         }
       >
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 px-4 py-2 sm:px-8">
-          <GitBranch className="h-4 w-4 text-violet-600" aria-hidden />
+          <GitBranch className="h-4 w-4 text-accent-600" aria-hidden />
           <label htmlFor="branch-select" className="sr-only">
             Version of this chapter
           </label>

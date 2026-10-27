@@ -2,8 +2,9 @@ import { useId, type InputHTMLAttributes, type TextareaHTMLAttributes } from "re
 import { cn } from "../../lib/cn";
 
 const fieldClass =
-  "block w-full rounded-lg border bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 " +
-  "focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500";
+  "block w-full rounded-md border bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 " +
+  "shadow-[inset_0_1px_1px_rgb(68_52_36/0.05)] transition-[border-color,box-shadow] duration-200 " +
+  "focus:outline-none focus:ring-[3px] focus:ring-accent-500/15 focus:border-accent-500";
 
 interface FieldShellProps {
   id: string;

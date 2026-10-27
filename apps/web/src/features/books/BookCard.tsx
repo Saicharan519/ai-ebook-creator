@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { pluralize, timeAgo } from "../../lib/format";
 import { BookCover } from "./BookCover";
 
+/** A book on the shelf: the cover lifts on hover, details sit underneath. */
 export function BookCard({
   book,
   onDelete,
@@ -12,29 +13,32 @@ export function BookCard({
   onDelete: (book: BookSummary) => void;
 }) {
   return (
-    <article className="group relative flex flex-col rounded-xl border border-stone-200 bg-white p-3 shadow-sm transition hover:shadow-md">
-      <Link to={`/books/${book.id}`} className="flex flex-1 flex-col gap-3">
-        <BookCover book={book} />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-semibold text-stone-900">{book.title}</h3>
+    <article className="group relative">
+      <Link to={`/books/${book.id}`} className="block rounded-md focus-visible:outline-offset-4">
+        <div className="shadow-book transition-[transform,box-shadow] duration-300 ease-out group-hover:-translate-y-1 group-hover:shadow-book-lift">
+          <BookCover book={book} author={book.author} />
+        </div>
+        <div className="mt-3.5 min-w-0 pr-6">
+          <h3 className="truncate font-serif text-[1.05rem] leading-snug font-medium text-stone-900">
+            {book.title}
+          </h3>
+          <p className="tabular mt-0.5 truncate text-xs text-stone-500">
+            {pluralize(book.wordCount, "word")} · {pluralize(book.chapterCount, "chapter")}
+          </p>
+          <p className="mt-1.5 flex items-center gap-2 text-xs text-stone-400">
             {book.status === "published" && (
-              <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              <span className="rounded-[3px] bg-accent-50 px-1.5 py-px text-[0.65rem] font-semibold tracking-wide text-accent-700 uppercase ring-1 ring-accent-200/70">
                 Published
               </span>
             )}
-          </div>
-          {book.genre && <p className="truncate text-sm text-stone-500">{book.genre}</p>}
-          <p className="mt-1 text-xs text-stone-500">
-            {pluralize(book.chapterCount, "chapter")} · {pluralize(book.wordCount, "word")}
+            <span className="truncate">Edited {timeAgo(book.updatedAt)}</span>
           </p>
-          <p className="text-xs text-stone-400">Edited {timeAgo(book.updatedAt)}</p>
         </div>
       </Link>
       <button
         type="button"
         onClick={() => onDelete(book)}
-        className="absolute top-5 right-5 rounded-md bg-white/90 p-1.5 text-stone-500 opacity-0 shadow-sm transition group-hover:opacity-100 hover:text-red-600 focus:opacity-100"
+        className="absolute top-2 right-2 rounded-md bg-paper/90 p-1.5 text-stone-500 opacity-0 shadow-sm backdrop-blur transition group-hover:opacity-100 hover:text-accent-700 focus:opacity-100"
         aria-label={`Delete ${book.title}`}
       >
         <Trash2 className="h-4 w-4" />

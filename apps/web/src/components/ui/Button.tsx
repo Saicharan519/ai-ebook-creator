@@ -2,16 +2,18 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "../../lib/cn";
 import { Spinner } from "./Spinner";
 
+// Primary actions are ink on paper; the accent is kept for highlights and state
 const VARIANTS = {
-  primary: "bg-violet-600 text-white hover:bg-violet-700 disabled:bg-violet-400",
+  primary:
+    "bg-stone-900 text-paper shadow-sm hover:bg-stone-800 disabled:bg-stone-400 disabled:shadow-none",
   secondary:
-    "border border-stone-300 bg-white text-stone-800 hover:bg-stone-50 disabled:text-stone-400",
-  ghost: "text-stone-700 hover:bg-stone-100 disabled:text-stone-400",
-  danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400",
+    "border border-stone-300/80 bg-white/70 text-stone-800 shadow-[0_1px_0_rgb(68_52_36/0.04)] hover:border-stone-400/70 hover:bg-white disabled:text-stone-400",
+  ghost: "text-stone-700 hover:bg-stone-900/5 disabled:text-stone-400",
+  danger: "bg-accent-700 text-white hover:bg-accent-800 disabled:bg-accent-300",
 };
 
 const SIZES = {
-  sm: "h-8 px-3 text-sm gap-1.5",
+  sm: "h-8 px-3 text-[0.8125rem] gap-1.5",
   md: "h-10 px-4 text-sm gap-2",
   icon: "h-8 w-8 justify-center",
 };
@@ -37,9 +39,9 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex shrink-0 items-center rounded-lg font-medium transition-colors",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600",
-        "disabled:cursor-not-allowed",
+        "inline-flex shrink-0 items-center rounded-md font-medium tracking-[-0.005em]",
+        "transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out",
+        "active:translate-y-px active:scale-[0.985] disabled:cursor-not-allowed disabled:active:transform-none",
         VARIANTS[variant],
         SIZES[size],
         className,

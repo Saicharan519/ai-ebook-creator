@@ -49,7 +49,7 @@ export function PublishDialog({ book, open, onClose, flushPending }: PublishDial
                 readOnly
                 value={url}
                 onFocus={(e) => e.target.select()}
-                className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-paper px-3 py-2 text-sm"
               />
               <Button variant="secondary" onClick={() => void copyLink()}>
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -61,7 +61,7 @@ export function PublishDialog({ book, open, onClose, flushPending }: PublishDial
                 href={url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-violet-600 hover:underline"
+                className="inline-flex items-center gap-1.5 text-accent-600 hover:underline"
               >
                 <ExternalLink className="h-4 w-4" />
                 Open the reader page

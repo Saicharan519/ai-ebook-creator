@@ -254,7 +254,7 @@ export function ChapterEditor({
         // A branch is an alternative text; the title belongs to the chapter
         readOnly={branchId !== null}
         title={branchId ? "Switch to the main text to rename the chapter" : undefined}
-        className="w-full bg-transparent font-serif text-3xl font-semibold text-stone-900 placeholder:text-stone-300 focus:outline-none"
+        className="w-full bg-transparent font-serif text-[2.5rem] leading-tight font-medium tracking-[-0.02em] text-stone-900 placeholder:text-stone-300 focus:outline-none"
       />
       <p className="mt-1 text-xs text-stone-500">
         {pluralize(countWords(draft.content), "word")}
@@ -276,7 +276,7 @@ export function ChapterEditor({
               onClick={() => runInlineAction("continue")}
               title="Continue writing from the cursor"
             >
-              <Sparkles className="h-4 w-4 text-violet-600" />
+              <Sparkles className="h-4 w-4 text-accent-600" />
               Continue
             </Button>
             <Button
@@ -286,7 +286,7 @@ export function ChapterEditor({
               onClick={() => void draftChapter()}
               title="Draft this chapter from its title and the book's outline"
             >
-              <PenLine className="h-4 w-4 text-violet-600" />
+              <PenLine className="h-4 w-4 text-accent-600" />
               Draft chapter
             </Button>
           </div>

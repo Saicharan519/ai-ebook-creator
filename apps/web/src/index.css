@@ -1,15 +1,120 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist/wght.css";
+@import "@fontsource-variable/newsreader/opsz.css";
+@import "@fontsource-variable/newsreader/opsz-italic.css";
 
+/*
+ * "Paper and ink": warm paper surfaces, near-black ink, and one accent, a
+ * muted oxblood like an editor's pen. Greys are Tailwind's warm stone scale.
+ */
 @theme {
-  --font-serif: "Georgia", "Iowan Old Style", "Times New Roman", serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+
+  --color-paper: #f7f4ee;
+  --color-paper-deep: #efe9df;
+
+  --color-accent-50: #fbf4f2;
+  --color-accent-100: #f6e4df;
+  --color-accent-200: #ecc7be;
+  --color-accent-300: #dd9d8f;
+  --color-accent-400: #c8705f;
+  --color-accent-500: #b0503d;
+  --color-accent-600: #973e2e;
+  --color-accent-700: #7d3226;
+  --color-accent-800: #662a21;
+  --color-accent-900: #53241d;
+
+  --shadow-page: 0 1px 2px rgb(68 52 36 / 0.06), 0 8px 24px -12px rgb(68 52 36 / 0.18);
+  --shadow-book: 0 1px 1px rgb(40 28 18 / 0.12), 0 12px 28px -10px rgb(40 28 18 / 0.35);
+  --shadow-book-lift: 0 2px 2px rgb(40 28 18 / 0.12), 0 22px 36px -12px rgb(40 28 18 / 0.4);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-stone-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-600);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-accent-100);
+    color: var(--color-stone-900);
+  }
+}
+
+/* A faint paper grain over everything, so large surfaces don't feel flat */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Staggered entrance: set --i on each element */
+.rise-in {
+  animation: rise-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
 }
 
 /* Chapter text in the editor: book-like typography */
 .chapter-prose {
   font-family: var(--font-serif);
-  font-size: 1.125rem;
-  line-height: 1.8;
+  font-size: 1.1875rem;
+  line-height: 1.75;
   color: var(--color-stone-800);
+  font-optical-sizing: auto;
+  hanging-punctuation: first;
 }
 
 .chapter-prose > * + * {
@@ -77,11 +182,11 @@
 }
 
 .chapter-prose hr.ProseMirror-selectednode {
-  border-top-color: var(--color-violet-500);
+  border-top-color: var(--color-accent-500);
 }
 
 .chapter-prose a {
-  color: var(--color-violet-700);
+  color: var(--color-accent-700);
   text-decoration: underline;
 }
 

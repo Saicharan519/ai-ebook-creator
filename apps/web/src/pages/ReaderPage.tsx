@@ -26,14 +26,14 @@ export function ReaderPage() {
   if (book.isError) return <ReaderError error={book.error} />;
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <header className="border-b border-stone-200 bg-white">
+    <div className="min-h-screen bg-paper">
+      <header className="sticky top-0 z-10 border-b border-stone-900/[0.07] bg-paper/85 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
           <Link
             to={`/read/${slug}`}
             className="flex min-w-0 items-center gap-2 font-serif font-semibold text-stone-900"
           >
-            <BookOpen className="h-4 w-4 shrink-0 text-violet-600" />
+            <BookOpen className="h-4 w-4 shrink-0 text-accent-600" />
             <span className="truncate">{book.data.title}</span>
           </Link>
           <span className="hidden truncate text-sm text-stone-500 sm:inline">
@@ -57,7 +57,7 @@ export function ReaderPage() {
 
       <footer className="pb-10 text-center text-xs text-stone-400">
         Written with{" "}
-        <Link to="/" className="hover:text-violet-600 hover:underline">
+        <Link to="/" className="hover:text-accent-600 hover:underline">
           AI eBook Creator
         </Link>
       </footer>
@@ -75,16 +75,21 @@ function BookHome({ book }: { book: PublicBook }) {
     <>
       <section className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {/* BookCover fills its container's width */}
-        <div className="w-40 shrink-0 shadow-md">
-          <BookCover book={{ id: book.slug, title: book.title, coverUrl: book.coverUrl }} />
+        <div className="w-44 shrink-0 shadow-book-lift">
+          <BookCover
+            book={{ id: book.slug, title: book.title, coverUrl: book.coverUrl }}
+            author={book.author}
+          />
         </div>
         <div>
           {book.genre && (
-            <p className="text-xs font-medium tracking-wide text-violet-700 uppercase">
+            <p className="text-xs font-medium tracking-wide text-accent-700 uppercase">
               {book.genre}
             </p>
           )}
-          <h1 className="mt-1 font-serif text-4xl font-semibold text-stone-900">{book.title}</h1>
+          <h1 className="mt-1 font-serif text-5xl leading-[1.05] font-medium tracking-[-0.02em] text-stone-900">
+            {book.title}
+          </h1>
           {book.subtitle && <p className="mt-1 text-lg text-stone-600">{book.subtitle}</p>}
           <p className="mt-3 text-stone-700">by {book.author}</p>
           <p className="mt-1 text-sm text-stone-500">
@@ -94,7 +99,7 @@ function BookHome({ book }: { book: PublicBook }) {
           {first && (
             <Link
               to={`/read/${book.slug}/${first.id}`}
-              className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-violet-600 px-4 text-sm font-medium text-white hover:bg-violet-700"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-md bg-stone-900 px-5 text-sm font-medium text-paper transition-colors hover:bg-stone-800"
             >
               Start reading
               <ArrowRight className="h-4 w-4" />
@@ -104,15 +109,15 @@ function BookHome({ book }: { book: PublicBook }) {
       </section>
 
       <nav aria-labelledby="contents-heading" className="mt-12">
-        <h2 id="contents-heading" className="font-serif text-xl font-semibold text-stone-900">
+        <h2 id="contents-heading" className="font-serif text-2xl font-medium text-stone-900">
           Contents
         </h2>
-        <ol className="mt-4 divide-y divide-stone-200 rounded-xl border border-stone-200 bg-white">
+        <ol className="mt-4 divide-y divide-stone-900/[0.07] border-y border-stone-900/[0.07]">
           {book.chapters.map((chapter, index) => (
             <li key={chapter.id}>
               <Link
                 to={`/read/${book.slug}/${chapter.id}`}
-                className="flex items-baseline gap-3 px-4 py-3 hover:bg-stone-50"
+                className="flex items-baseline gap-4 px-2 py-3.5 transition-colors hover:bg-white/60"
               >
                 <span className="w-6 shrink-0 text-right text-sm text-stone-400">{index + 1}</span>
                 <span className="flex-1 font-serif text-stone-900">{chapter.title}</span>
@@ -153,7 +158,7 @@ function ChapterView({
             ? "This chapter isn't available."
             : `Couldn't load this chapter. ${errorMessage(chapter.error)}`}
         </p>
-        <Link to={`/read/${slug}`} className="mt-4 inline-block text-violet-600 hover:underline">
+        <Link to={`/read/${slug}`} className="mt-4 inline-block text-accent-600 hover:underline">
           Back to contents
         </Link>
       </div>
@@ -164,8 +169,8 @@ function ChapterView({
 
   return (
     <article>
-      <p className="text-sm font-medium text-violet-700">Chapter {chapter.data.number}</p>
-      <h1 className="mt-1 mb-8 font-serif text-3xl font-semibold text-stone-900">
+      <p className="text-sm font-medium text-accent-700">Chapter {chapter.data.number}</p>
+      <h1 className="mt-2 mb-10 font-serif text-4xl leading-tight font-medium tracking-[-0.02em] text-stone-900">
         {chapter.data.title}
       </h1>
       <MarkdownView markdown={chapter.data.content} />
@@ -202,7 +207,7 @@ function ChapterLink({
     <Link
       to={`/read/${slug}/${chapter.id}`}
       rel={isNext ? "next" : "prev"}
-      className={`flex max-w-[40%] items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 hover:border-violet-300 ${
+      className={`flex max-w-[40%] items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 hover:border-accent-300 ${
         isNext ? "text-right" : ""
       }`}
     >
@@ -220,7 +225,7 @@ const isNotFound = (error: Error) => error instanceof ApiRequestError && error.s
 
 function ReaderError({ error }: { error: Error }) {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-stone-50 px-4 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-paper px-4 text-center">
       <h1 className="font-serif text-2xl font-semibold text-stone-900">
         {isNotFound(error) ? "This book isn't available" : "Couldn't load this book"}
       </h1>
@@ -229,7 +234,7 @@ function ReaderError({ error }: { error: Error }) {
           ? "The link may be wrong, or the author has unpublished it."
           : errorMessage(error)}
       </p>
-      <Link to="/" className="text-violet-600 hover:underline">
+      <Link to="/" className="text-accent-600 hover:underline">
         Go to AI eBook Creator
       </Link>
     </main>
@@ -239,7 +244,7 @@ function ReaderError({ error }: { error: Error }) {
 function CenteredSpinner() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <Spinner className="h-6 w-6 text-violet-600" />
+      <Spinner className="h-6 w-6 text-accent-600" />
     </div>
   );
 }

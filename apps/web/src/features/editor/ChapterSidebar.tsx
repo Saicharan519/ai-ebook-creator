@@ -57,7 +57,7 @@ export function ChapterSidebar({
   return (
     <nav aria-label="Chapters" className="flex h-full flex-col">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">Chapters</h2>
+        <h2 className="font-serif text-base font-medium text-stone-900">Chapters</h2>
         <Button variant="ghost" size="sm" onClick={onAdd} loading={adding}>
           {!adding && <Plus className="h-4 w-4" />}
           Add
@@ -84,7 +84,7 @@ export function ChapterSidebar({
 
       <div className="border-t border-stone-200 p-3">
         <Button variant="secondary" size="sm" className="w-full justify-center" onClick={onPlan}>
-          <Sparkles className="h-4 w-4 text-violet-600" />
+          <Sparkles className="h-4 w-4 text-accent-600" />
           Plan chapters with AI
         </Button>
       </div>
@@ -123,7 +123,7 @@ function SortableChapter({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "group flex items-center gap-1 rounded-lg pr-1",
-        selected ? "bg-violet-50" : "hover:bg-stone-100",
+        selected ? "bg-accent-50" : "hover:bg-stone-100",
         isDragging && "relative z-10 bg-white shadow-md",
       )}
     >
@@ -146,7 +146,7 @@ function SortableChapter({
         <span
           className={cn(
             "block truncate text-sm",
-            selected ? "font-medium text-violet-800" : "text-stone-800",
+            selected ? "font-medium text-accent-800" : "text-stone-800",
           )}
         >
           <span className="mr-1.5 text-stone-400">{index + 1}.</span>

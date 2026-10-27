@@ -33,14 +33,14 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
       onClick={(event) => event.target === ref.current && onClose()}
       aria-labelledby="modal-title"
       className={cn(
-        "m-auto w-[calc(100%-2rem)] rounded-xl bg-white p-0 shadow-xl backdrop:bg-stone-900/40",
+        "m-auto w-[calc(100%-2rem)] rounded-xl border border-stone-200/70 bg-white p-0 shadow-2xl shadow-stone-900/20 backdrop:bg-stone-900/30 backdrop:backdrop-blur-[2px]",
         size === "lg" ? "max-w-2xl" : "max-w-lg",
       )}
     >
       {open && (
         <div className="flex max-h-[85vh] flex-col">
           <header className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
-            <h2 id="modal-title" className="text-lg font-semibold text-stone-900">
+            <h2 id="modal-title" className="font-serif text-xl font-medium text-stone-900">
               {title}
             </h2>
             <button
@@ -54,7 +54,7 @@ export function Modal({ open, onClose, title, children, footer, size = "md" }: M
           </header>
           <div className="overflow-y-auto px-6 py-5">{children}</div>
           {footer && (
-            <footer className="flex justify-end gap-2 border-t border-stone-200 px-6 py-4">
+            <footer className="flex justify-end gap-2 border-t border-stone-200/70 bg-paper/60 px-6 py-4">
               {footer}
             </footer>
           )}

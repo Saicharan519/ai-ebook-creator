@@ -39,7 +39,7 @@ function ToolbarButton({
       onClick={onClick}
       className={cn(
         "rounded-md p-1.5 transition-colors disabled:opacity-40",
-        active ? "bg-violet-100 text-violet-700" : "text-stone-600 hover:bg-stone-100",
+        active ? "bg-accent-100 text-accent-700" : "text-stone-600 hover:bg-stone-100",
       )}
     >
       <Icon className="h-4 w-4" />
